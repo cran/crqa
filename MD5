@@ -1,9 +1,9 @@
-2382146ad4a55a565209e4890ffbba42 *DESCRIPTION
+2130fd6fb3f55beeff41125b55f3fa94 *DESCRIPTION
 d2bbf7d606e2b8edf51291b47e2afa0c *NAMESPACE
 28ae7e1d4c946f1c5b80da067e9d2586 *R/CTcrqa.R
 fd4d3e5903396c9dd00c5d77bb712d2c *R/calcphi.R
 b51bdcb8367be865d0aa541d9a4b3649 *R/checkts.R
-f12a5273ac04f53b7ab8613555b3572d *R/crqa.R
+c7de9a642ad4dc08081aeb778f4f734e *R/crqa.R
 df7954f7b92ca063bb3bd4fff8f61d2d *R/drpdfromts.R
 95c55fef36ee3a927d42514cfc863449 *R/optimizeParam.R
 e6e3cae0868c158b72fd28c61e6a6b07 *R/runcrqa.R

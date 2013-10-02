@@ -31,11 +31,11 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
     
     v11 = v21 = NULL ## stupid initializations to please CRAN
     
-   #  require("fields") ## to compute the Euclidean distance matrix
-   # require("Matrix")  ## to manipulate sparse matrices 
+   ## require("fields") ## to compute the Euclidean distance matrix
+   ## require("Matrix")  ## to manipulate sparse matrices 
 
 
-    ## check if the input is recurrence plot 
+    ## check if the input is a recurrence plot 
     if (recpt == FALSE){
 
     
@@ -86,40 +86,53 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
             assign(paste("v2", loop, sep =""), ts2[vectorstart:vectorend]);
         }
         
-    ## Create matrix from vectors to use for distance matrix calcs
+        ## Create matrix from vectors to use for distance matrix calcs
+
+        dimts1 = dimts2 = vector() ## initialize dims of embedding 
         
         for (loop in 1:embed){
             if (loop == 1){ dimts1 = v11 }
             else{
-                eval( parse ( text = 
-                             paste("dimts1 = ", "v1", loop, sep = "")
-                             )
-                     )}
+                eval(
+                    parse(
+                        text = paste("dimts1 = cbind(dimts1,",
+                            paste( "v1", loop, sep = ""),
+                            ", deparse.level = 0)", sep = "")
+                        )
+                    )
+            }
         }
     
         for (loop in 1:embed){
             if (loop == 1){ dimts2 = v21 }
             else{
-                eval( parse ( text = 
-                             paste("dimts2 = ", "v2", loop, sep = "")
-                             )
-                     )}
+                eval(
+                    parse(
+                        text = paste("dimts2 = cbind(dimts2,",
+                            paste( "v2", loop, sep = ""),
+                            ", deparse.level = 0)", sep = "")
+                        )
+                    )
+            }
         }
         
         
-        ##Compute euclidean distance matrix
-        vlength = length(v11)
+        ## Compute euclidean distance matrix
+        vlength = length(v11) ## just to have the length of matrix saved
         dm = rdist(dimts1,dimts2);
         
-        ## Find indeces of the distance matrix that fall within prescribed radius.
+        ## Find indeces of the distance matrix that fall
+        ## within prescribed radius.
         
         switch(rescale,
-               {1  ## Create a distance matrix that is re-scaled to the mean distance
+               {1  ## Create a distance matrix that is re-scaled
+                   ## to the mean distance
                 
                 rescaledist = mean( dm )    
                 dmrescale=(dm/rescaledist)*100},
                
-               {2  ## Create a distance matrix that is re-scaled to the max distance
+               {2  ## Create a distance matrix that is re-scaled
+                   ## to the max distance
                 
                 rescaledist = max(dm);
                 dmrescale = (dm/rescaledist)*100}
@@ -141,24 +154,8 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
     
     if (length(r) != 0 & length(c) != 0){ ##avoid cases with no recurrence
         S = sparseMatrix(r, c) ## this is the recurrent plot
-        
-        ## the below code should now go, if spdiags is really working
-        
-       #         if (nrow(S) > ncol(S)){ ##this is a hack to resolve cases for which we do not have a square matrix
-#            print( paste ("Matrix is not square:", ncol(S), nrow(S) ) )
-#            df = abs(ncol(S) - nrow(S))
-#            S = as.matrix(S);
-#            for (r in 1:df){ S = cbind(S, vector("logical", nrow(S)))}
-#        }  
   
-#        if (ncol(S) > nrow(S)){ ## likewise
-                                        #  print( paste ("Matrix is not square:", ncol(S), nrow(S) ) )
-#            df = abs(ncol(S) - nrow(S))
-#            S = as.matrix(S);
-#            for (r in 1:df){ S = rbind(S, vector("logical", ncol(S)))}
-#        }  
-  
-        spdiagonalize = spdiags(S) ##  spdiags makes code slower 
+        spdiagonalize = spdiags(S) ##  spdiags should have decent speed 
         B = spdiagonalize$B
         
         ##calculate percentage recurrence by taking all non-zeros
@@ -171,19 +168,26 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         
         ## Computing the line counts
 
-# This section finds the index of the zeros in the matrix B,
-# which contains the diagonals of one triangle of the recurrence matrix
-# (the identity line excluded). The find command indexes the matrix sequentially
-# from 1 to the total number of elements. The element numbers for a 2X2 matrix
-# would be [1 3; 2 4]. You get a hit for every zero. If you take the
-# difference of the resulting vector, minus 1, it yields the length of an
-# interceding vector of ones, a line. Here is an e.g. using a row vector
-# rather than a col. vector, since it types easier: B=[0 1 1 1 0], a line of
-# length 3.  find( B == 0 ) yields [1 5], diff( [1 5] ) -1 = 3, the line length.
-# So this solution finds line lengths in the interior of the B matrix, BUT
-# fails if a line butts up against either edge of the B matrix, e.g. say
-# B = [0 1 1 1 1], find( B == 0) returns a 1, and you miss the line of length 4.
-# A solution is to "bracket" B with a row of zeros at each top and bottom.
+        ## This section finds the index of the zeros in the matrix B,
+        ## which contains the diagonals of one triangle of the
+        ## recurrence matrix (the identity line excluded).
+
+        ## The find command indexes the matrix sequentially
+        ## from 1 to the total number of elements.
+        ## The element numbers for a 2X2 matrix would be [1 3; 2 4].
+        ## You get a hit for every zero. If you take the difference
+        ## of the resulting vector, minus 1, it yields the length of an
+        ## interceding vector of ones, a line. Here is an e.g.
+        ## using a row vector rather than a col. vector, since it types
+        ## easier: B=[0 1 1 1 0], a line of length 3.
+        ## find( B == 0 ) yields [1 5], diff( [1 5] ) -1 = 3,
+        ## the line length.
+        ## So this solution finds line lengths in the interior of
+        ## the B matrix, BUT fails if a line butts up against either
+        ## edge of the B matrix, e.g. say  B = [0 1 1 1 1],
+        ## which( B == 0) returns a 1, and you miss the line of length 4.
+        ## A solution is to "bracket" B with a row of zeros at each
+        ## top and bottom.
 
         ## Bracket B with zeros
         if (is.vector(B)) {
@@ -231,8 +235,7 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
             pdeter = (sum(diaglines)/numrecurs)*100
             ## percent determinism: the predictability of the dynamical system 
         
-            ## calculate laminarity and trapping time:
-
+            ## calculate laminarity and trapping time
             restt = tt(S, minvertline, whiteline)
             lam = restt$lam; TT = restt$TT
                     
