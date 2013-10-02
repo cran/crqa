@@ -1,0 +1,19 @@
+useDynLib(crqa)
+
+export(CTcrqa,
+    calcphi,
+    checkts,
+    crqa,
+    drpdfromts,
+    optimizeParam,
+    runcrqa,
+    simts,
+    spdiags,
+    wincrqa,
+    windowdrp)
+
+import(tseriesChaos,
+       fields)
+
+importFrom(Matrix,Matrix)
+importFrom(Matrix,t)
