@@ -1,5 +1,5 @@
-2130fd6fb3f55beeff41125b55f3fa94 *DESCRIPTION
-d2bbf7d606e2b8edf51291b47e2afa0c *NAMESPACE
+17a72843c456fc07e37d2ad0bbcfbefa *DESCRIPTION
+19f5432d7b832dc03fd4807562eb072e *NAMESPACE
 28ae7e1d4c946f1c5b80da067e9d2586 *R/CTcrqa.R
 fd4d3e5903396c9dd00c5d77bb712d2c *R/calcphi.R
 b51bdcb8367be865d0aa541d9a4b3649 *R/checkts.R
@@ -10,7 +10,7 @@ e6e3cae0868c158b72fd28c61e6a6b07 *R/runcrqa.R
 0264d4c328a7a32ec30714b4a3e16dc8 *R/simts.R
 ef263b24aca130d3cc80288cd67e1fd4 *R/spdiags.R
 47cac4ad60709f2d3a8f9d1b24008fe5 *R/takephi.R
-a89fbe42e585e470d5beff606cdee952 *R/tt.R
+0644a79788ad1345b2c5a084e543b649 *R/tt.R
 956b2018d4a568f3c11f23cf0728710d *R/wincrqa.R
 54d09d840eb3679de8de57fb308a0b84 *R/windowdrp.R
 a72ee7a81674d8dd60532a41aa27d149 *data/crqa.RData
@@ -30,6 +30,7 @@ e4d4c30489765e72fc8d6a1d7b8dea2a *man/crqa.Rd
 068ea7765083d3e35a109cd2cd53cc6d *man/runcrqa.Rd
 a02045e8733e9ba46c6d094654cfdb68 *man/simts.Rd
 47cbd9f5cd8e35b18bbaf1039e858951 *man/spdiags.Rd
+8522ac7eb9dc1e0be3e0066802519f10 *man/tt.Rd
 343d013ad9a0a124574e5e36039a63ae *man/wincrqa.Rd
 29dcbbff24f2496573bed92ddffe3810 *man/windowdrp.Rd
 a9de526d2dd2130a3b2c4eae51b6c365 *src/jspd.f

@@ -1,6 +1,12 @@
 ## extract vertical lines from a recurrence plot,
 ## calculate laminarity and trapping time.
-# x = [0,1,1,0,0,1; 0,0,0,1,1,1; 0,1,0,0,0,1; 1,0,0,0,0,1]
+
+## build a random x matrix
+# r = 100; c = 100
+# x = round(matrix(runif(r*c), r, c))
+# whiteline = FALSE
+# minvertline = 2
+# ans = tt(x, minvertline, whiteline)
 
 tt <- function(x, minvertline, whiteline){
     # require(Matrix)

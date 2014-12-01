@@ -2,8 +2,8 @@ Package: crqa
 Type: Package
 Title: Cross-Recurrence Quantification Analysis for Categorical and
         Continuous Time-Series
-Version: 1.0.1
-Date: 2013-10-02
+Version: 1.0.2
+Date: 2014-12-01
 Author: Moreno I. Coco and Rick Dale
 Maintainer: Moreno I. Coco <moreno.cocoi@gmail.com>
 Description: 
@@ -19,7 +19,7 @@ License: GPL (>= 2)
 Collate: 'CTcrqa.R' 'calcphi.R' 'checkts.R' 'crqa.R' 'drpdfromts.R'
         'optimizeParam.R' 'runcrqa.R' 'simts.R' 'spdiags.R' 'takephi.R'
         'tt.R' 'wincrqa.R' 'windowdrp.R'
-Packaged: 2013-11-12 10:29:10 UTC; micoco
+Packaged: 2014-01-12 13:45:04 UTC; root
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2013-11-12 12:39:23
+Date/Publication: 2014-01-12 16:51:23
