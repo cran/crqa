@@ -47,7 +47,7 @@
 
 data(crqa)
 
-res = drpdfromts(catts1, catts2, ws = 100,
+res = drpdfromts(RDts1, RDts2, ws = 100,
 datatype = "categorical", radius = 0.000001)
 
 profile = res$profile

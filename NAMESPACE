@@ -9,6 +9,7 @@ export(CTcrqa,
     runcrqa,
     simts,
     spdiags,
+    theiler,
     tt,
     wincrqa,
     windowdrp)

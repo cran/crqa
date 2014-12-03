@@ -1,6 +1,7 @@
-## crqa, adapted from a Matlab code developed at
-## Cincinnati school (we need full ref. here)
 ## written in R by Moreno I. Coco, 2013, (moreno.cocoi@gmail.com)
+## crqa, adapted from a Matlab code developed at
+## summer school Nonlinear Methods for Psychological Science
+## organized by the University of Cincinnati, 2012
 
 ## arguments to pass to crqa:
 ## ts1, ts2: times series of integers indicating the states
@@ -15,20 +16,27 @@
 ## mindiagline = set a minimum diagonal line length
 ## mindiagline = set a minimum vertical line length
 
-## delay = 1; embed = 1; rescale = 1; radius = 0.00001;
-## normalize = 0; mindiagline = 2; minvertline = 2;
-## whiteline = TRUE - flag to compute or not white vertical lines
-##                    in the recurrence plot. Note, white lines are not
+# delay = 1; embed = 1; rescale = 1; radius = 0.001;
+# normalize = 0; mindiagline = 2; minvertline = 2;
+#  whiteline = FALSE # - flag to compute or not white vertical lines
+#                    in the recurrence plot. Note, white lines are not
 ##                    yet used to derive any particular measure
-## recpt = TRUE - flag to indicate whether the input ts1 is already
+#  recpt = FALSE # - flag to indicate whether the input ts1 is already
 ##                a recurrence plot
+## tw = the size of the Theiler Window, the default is 0
+## ts1 = c(0,0,1,1,0,0)
+## ts2 = c(2,2,1,1,2,2)
+## ts1 = c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1)
+## ts2 = c(2, 2, 1, 1, 2, 2, 1, 1, 0, 0)
 
 packageName <- 'crqa'
 
 crqa <- function(ts1, ts2, delay, embed, rescale,
                  radius, normalize, mindiagline, minvertline,
-                 whiteline, recpt){
-    
+                 tw, whiteline, recpt){
+
+    if( missing(tw) ){ tw = 0} ## default for Theiler window
+
     v11 = v21 = NULL ## stupid initializations to please CRAN
     
    ## require("fields") ## to compute the Euclidean distance matrix
@@ -46,7 +54,7 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         if (is.matrix(ts2)){ stop("Your data must consist of a single column of data.")}
     
     
-    ##chop of sequences if they are off different lengths
+    ##chop of sequences if they are of different lengths
     
         if (length(ts1) != length(ts2)){
             shortest = min(c(length(ts1), length(ts2)) );
@@ -123,21 +131,21 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         
         ## Find indeces of the distance matrix that fall
         ## within prescribed radius.
-        
-        switch(rescale,
-               {1  ## Create a distance matrix that is re-scaled
-                   ## to the mean distance
-                
-                rescaledist = mean( dm )    
-                dmrescale=(dm/rescaledist)*100},
-               
-               {2  ## Create a distance matrix that is re-scaled
-                   ## to the max distance
-                
-                rescaledist = max(dm);
-                dmrescale = (dm/rescaledist)*100}
-           )
-        
+        if (rescale > 0){
+            switch(rescale,
+                   {1  ## Create a distance matrix that is re-scaled
+                    ## to the mean distance
+                    
+                    rescaledist = mean( dm )    
+                    dmrescale=(dm/rescaledist)*100},
+                   
+                   {2  ## Create a distance matrix that is re-scaled
+                    ## to the max distance
+                    
+                    rescaledist = max(dm);
+                    dmrescale = (dm/rescaledist)*100}
+                   )
+        } else { dmrescale = dm }
         ## Compute recurrence matrix
         
         ind = which(dmrescale <= radius, arr.ind=T);
@@ -145,6 +153,7 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
 
     } else { ## take as input an RP directly
 
+        vlength = nrow(ts1)
         ind = which(ts1 > 0, arr.ind = T)
         ## just a trick to reduce the number of lines
         ## of the code
@@ -153,8 +162,15 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
     }
     
     if (length(r) != 0 & length(c) != 0){ ##avoid cases with no recurrence
-        S = sparseMatrix(r, c) ## this is the recurrent plot
-  
+        S = sparseMatrix(r, c, dims = c(vlength, vlength))
+        ## this is the recurrent plot
+        ## transpose it to make identical to Marwan
+        S = t(S)
+
+        ## apply the theiler argument here to recurrence matrix
+        ## Marwan blanks out the recurrence along the diag
+        S = theiler(S, tw)
+
         spdiagonalize = spdiags(S) ##  spdiags should have decent speed 
         B = spdiagonalize$B
         
@@ -227,16 +243,16 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
             }
             
             ## entropy log2, and relative entropy divided by max
-            entropy = -1 * sum(p*log2(p))    
-            relEntropy = entropy/(-1*log2(1/nrow(tabled)))
+            entropy = - sum(p*log(p))    
+            relEntropy = entropy/(-1*log(1/nrow(tabled)))
 
             ## entropy/max entropy: comparable across contexts and conditions.
         
-            pdeter = (sum(diaglines)/numrecurs)*100
+            pdeter = sum(diaglines)/numrecurs*100
             ## percent determinism: the predictability of the dynamical system 
         
             ## calculate laminarity and trapping time
-            restt = tt(S, minvertline, whiteline)
+            restt = tt(S, minvertline, whiteline)            
             lam = restt$lam; TT = restt$TT
                     
         } else {

@@ -1,5 +1,7 @@
 ## extract vertical lines from a recurrence plot,
 ## calculate laminarity and trapping time.
+## part of this code was borrowed from the original
+## tt.m function of the crptool written by Norbert Marwan
 
 ## build a random x matrix
 # r = 100; c = 100
@@ -7,6 +9,7 @@
 # whiteline = FALSE
 # minvertline = 2
 # ans = tt(x, minvertline, whiteline)
+# x = rbind(c(1,0,1,1,1,1), c(1,1,0,0,1,1), c(0,1,0,1,0,1))
 
 tt <- function(x, minvertline, whiteline){
     # require(Matrix)
@@ -41,12 +44,11 @@ tt <- function(x, minvertline, whiteline){
     TT = mean(t1) ## trapping time
     
     ## calculate laminarity: the amount of laminar phases in the system.
-    nrbln = length(t1) ## nr. of vertical black lines
+    nrbln = sum(x) ## nr. of recurrent points
     
     ## total number of vertical lines
     ## including those below the vertline threshold.
-
-    mnvert = which(t1 <= minvertline)
+    mnvert = which(t1 < minvertline)
 
     if (length(mnvert) != 0){ ## there are vertical lines smaller than minimum    
         t1tr = t1[-mnvert]
@@ -57,9 +59,7 @@ tt <- function(x, minvertline, whiteline){
     ## else just return t1tr
 
     if(length(t1tr) > 0){ ## there are vertical lines
-        Vtabled = as.data.frame( table( t1tr ) )
-    ## get the frequency of vertical lines
-        lam = (sum(Vtabled[,2])/nrbln)*100
+        lam = (sum(t1tr)/nrbln)*100
     } else {
         lam = 0 }
     

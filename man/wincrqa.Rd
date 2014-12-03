@@ -15,7 +15,7 @@
 \usage{
 
 wincrqa(x, y, step, windowsize, lagwidth, delay, embed, rescale,
-radius, normalize, mindiagline, minvertline, whiteline, recpt)
+radius, normalize, mindiagline, minvertline, tw, whiteline, recpt)
 
 }
 
@@ -44,6 +44,7 @@ radius, normalize, mindiagline, minvertline, whiteline, recpt)
     a minimum of two points to define any line.}
   \item{minvertline}{A minimum vertical length of
     recurrent points.}
+  \item{tw}{The size of the Theiler window}
   \item{whiteline}{A logical flag to calculate (TRUE)
     or not (FALSE) empty vertical lines.}
   \item{recpt}{A logical flag indicating whether
@@ -75,20 +76,25 @@ radius, normalize, mindiagline, minvertline, whiteline, recpt)
 
 \examples{
 
-data(crqa)
+## simulate two dichotomous series
+tS = simts(0.25, 0.05, 0.2, 0.2, 0.25, 200)
+ts1 = tS[1,]; ts2 = tS[2,]
 
-step =  10; windowsize =  100; lagwidth = 40;
+## check data(crqa) for alternative data
+## (e.g., RDts1, RDts2)
+
+step =  10; windowsize =  100; lagwidth = 20;
 delay = 1; embed =  1 ; rescale =  1;
 radius = 0.00001; normalize = 0;
 minvertline = 2; mindiagline = 2;
-whiteline = FALSE; recpt = FALSE
+tw = 0; whiteline = FALSE; recpt = FALSE
 
 ## it returns matrix with all measures for the
 ## different windows where values are found
 
-res = wincrqa(RDts1, RDts2, step, windowsize,
+res = wincrqa(ts1, ts2, step, windowsize,
 lagwidth, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, whiteline, recpt)
+mindiagline, minvertline, tw, whiteline, recpt)
 
 str(res)
 

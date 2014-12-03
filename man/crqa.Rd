@@ -14,7 +14,7 @@
   extracted (explained below).}
 \usage{
 crqa(ts1, ts2, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, whiteline, recpt)
+mindiagline, minvertline, tw, whiteline, recpt)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,6 +24,7 @@ mindiagline, minvertline, whiteline, recpt)
   \item{embed}{The number of embedding dimension for
     phase-reconstruction, i.e., the lag intervals.}
   \item{rescale}{Rescale the distance matrix;
+    if rescale = 0 (do nothing);
     if rescale = 1 (mean distance of entire matrix);
     if rescale = 2 (maximum distance of entire matrix).}
   \item{radius}{A threshold, cut-off, constant used to
@@ -37,6 +38,7 @@ mindiagline, minvertline, whiteline, recpt)
     a minimum of two points to define any line.}
   \item{minvertline}{A minimum vertical length of
     recurrent points.}
+  \item{tw}{The Theiler window parameter}
   \item{whiteline}{A logical flag to calculate (TRUE)
     or not (FALSE) empty vertical lines.}
   \item{recpt}{A logical flag indicating whether
@@ -76,9 +78,12 @@ mindiagline, minvertline, whiteline, recpt)
 }
 
 \author{Moreno I. Coco (moreno.cocoi@gmail.com)}
+
 \note{Part of this code was translated from a Matlab
-  version provided by Rick Dale, and created during a
-  summer school in Cincinnati 2012}
+  version provided by Rick Dale, and created during 
+  the Non-Linear Methods for Psychological Science
+  summer school held at the University of Cincinnati
+  in 2011}
 
 \seealso{ \code{\link{tt}}, \code{\link{spdiags}},
 \code{\link{simts}}}
@@ -95,10 +100,10 @@ ts1 = tS[1,]; ts2 = tS[2,]
 ## initialize the parameters
 delay = 1; embed =  1 ; rescale =  1; radius = 0.00001;
 normalize = 0; minvertline = 2; mindiagline = 2;
-whiteline = FALSE; recpt = FALSE
+tw = 0; whiteline = FALSE; recpt = FALSE
 
 ans = crqa(ts1, ts2, delay, embed, rescale, radius,
-normalize, minvertline, mindiagline, whiteline,recpt)
+normalize, minvertline, mindiagline, tw, whiteline,recpt)
 
 print(ans[1:9]) ## last argument of list is the cross-recurrence plot
 RP = ans$RP ## take out RP

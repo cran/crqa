@@ -18,7 +18,8 @@
 
 .packageName <- 'crqa'
 
-wincrqa <- function(x, y, step, windowsize, lagwidth, delay, embed, rescale, radius, normalize, mindiagline, minvertline, whiteline, recpt){
+wincrqa <- function(x, y, step, windowsize, lagwidth, delay, embed, 
+rescale, radius, normalize, mindiagline, minvertline, tw, whiteline, recpt){
 
     recpt = FALSE
     ## we do not expect as input a windowed recurrent plot
@@ -36,7 +37,8 @@ wincrqa <- function(x, y, step, windowsize, lagwidth, delay, embed, rescale, rad
         ywin = y[i:(i+windowsize)];
         
         ans = crqa(xwin, ywin, delay, embed, rescale,
-            radius, normalize, mindiagline, minvertline, whiteline, recpt)
+            radius, normalize, mindiagline, minvertline, tw,
+            whiteline, recpt)
         
     
         ans = as.numeric( unlist(ans[1:9]) )

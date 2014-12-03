@@ -59,7 +59,7 @@ runcrqa <- function(ts1, ts2, par){
 
     datatype = thrshd = type = method = ws = radius = windowsize =
     lagwidth = delay = rescale = normalize = mindiagline = minvertline =
-        whiteline = recpt = NULL
+        tw = whiteline = recpt = NULL
     ## stupid initialization to please CRAN
     
     for (v in 1:length(par)) assign(names(par)[v], par[[v]]) ## assign parameters
@@ -101,15 +101,15 @@ runcrqa <- function(ts1, ts2, par){
                 
                         res = crqa(ts1, ts2, delay, embed,
                             rescale, radius, normalize, mindiagline, minvertline,
-                            whiteline, recpt)
+                            tw, whiteline, recpt)
                         
                     }
 
                     if (method == "window"){
                         
-                        res = wincrqa(ts1, ts2, delay, embed,
-                            rescale, radius, normalize, mindiagline, minvertline,
-                            whiteline, recpt)
+                        res = wincrqa(ts1, ts2, step, windowsize, lagwidth, delay,
+                            embed, rescale, radius, normalize, mindiagline, minvertline,
+                            tw, whiteline, recpt)
               
                     }
                
