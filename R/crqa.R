@@ -2,6 +2,7 @@
 ## crqa, adapted from a Matlab code developed at
 ## summer school Nonlinear Methods for Psychological Science
 ## organized by the University of Cincinnati, 2012
+## next time i check change sd(matrix) with sapply(matrix, sd)
 
 ## arguments to pass to crqa:
 ## ts1, ts2: times series of integers indicating the states

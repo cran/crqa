@@ -1,9 +1,9 @@
-c73422ef379866e5043ffa4b7be48f22 *DESCRIPTION
+6d5a3c039a49659684234ddbfca30662 *DESCRIPTION
 1cee7a78a67f9d3c8cd68e9ffc4ade52 *NAMESPACE
 28ae7e1d4c946f1c5b80da067e9d2586 *R/CTcrqa.R
 fd4d3e5903396c9dd00c5d77bb712d2c *R/calcphi.R
 b51bdcb8367be865d0aa541d9a4b3649 *R/checkts.R
-68256e9c8151d9725944f10bc32c8bb9 *R/crqa.R
+341931e900fd6808faac508992e58472 *R/crqa.R
 df7954f7b92ca063bb3bd4fff8f61d2d *R/drpdfromts.R
 fc7bb8a825747019e0e789157d3eb4b3 *R/optimizeParam.R
 dcf5e486656a61ad8de9f92095ff67f2 *R/runcrqa.R
@@ -24,7 +24,7 @@ da138fa547a6838629fe7d5b93ba8e90 *data/crqa.RData
 99f7ac521d1511f667ac9e2d3c3b0456 *man/crqa.Rd
 212ae1a69c55e5fa7968d72a095be035 *man/drpdfromts.Rd
 ef2141e99f7f3f2cff924104b4f7fc8e *man/leftmov.Rd
-9c82d5ab954f947db0e3de804c304401 *man/optimizeParam.Rd
+27dbde773468780efc5ad7ea06d1cf44 *man/optimizeParam.Rd
 6548ea97f5c7480527001f75262cba19 *man/rightmov.Rd
 068ea7765083d3e35a109cd2cd53cc6d *man/runcrqa.Rd
 a02045e8733e9ba46c6d094654cfdb68 *man/simts.Rd

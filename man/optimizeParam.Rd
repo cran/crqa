@@ -103,19 +103,28 @@ optimizeParam(ts1, ts2, par)
 
 \examples{
 
-data(crqa)
+## initialize the parameters
 
 par = list(lgM =  20, steps = seq(1, 6, 1),
 cut.del = seq(1, 40,1), 
-radiusspan = 100, radiussample = 10, 
+radiusspan = 100, radiussample = 40, 
 normalize = 0, rescale = 1, mindiagline = 2, 
 minvertline = 2, tw = 0, whiteline = FALSE, 
 recpt = FALSE)
 
-ans = optimizeParam(leftmov, rightmov, par)
+## generate two random uniform series
+ts1 = runif(100)
+ts2 = runif(100)
 
+ans = optimizeParam(ts1,ts2,par)
 print(ans)
 
+## utilize leftmov, rightmov for an application to real-data
+## reduce radiussample to increase computational speed
+
+## data(crqa)
+## ans = optimizeParam(leftmov, rightmov, par)
+## print(ans)
 
 }
 
