@@ -172,7 +172,8 @@ data(crqa)
 ###Cross-recurrence diagonal profile 
 
 par = list(type = 1, ws = 100, method = "profile",
-    datatype = "continuous", thrshd = 8, radius = 2)
+    datatype = "categorical", thrshd = 8, radius = 2,
+     pad = FALSE)
 
 ans = runcrqa(RDts1, RDts2, par)
 
@@ -181,8 +182,9 @@ profile = ans$profile; maxrec = ans$maxrec; maxlag = ans$maxlag
 ####################################################
 ###Windowed cross-recurrence profile 
 
-par = list(type = 1, step =  20, windowsize =  100, lagwidth = 40,
-  method = "window", datatype = "categorical", thrshd = 8)
+par = list(type = 1, windowstep =  20, windowsize =  100, 
+  method = "window", datatype = "categorical", thrshd = 8,
+     pad = FALSE)
 
 ans = runcrqa(RDts1, RDts2, par)
 

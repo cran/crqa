@@ -1,6 +1,6 @@
 ## written in R by Moreno I. Coco, 2013, (moreno.cocoi@gmail.com)
 ## crqa, adapted from a Matlab code developed at
-## summer school Nonlinear Methods for Psychological Science
+## summer school of: Nonlinear Methods for Psychological Science
 ## organized by the University of Cincinnati, 2012
 ## next time i check change sd(matrix) with sapply(matrix, sd)
 
@@ -10,72 +10,104 @@
 ## embed = the embedding dimension, i.e., the lag intervals
 ## rescale = the normalization for the distance; 
 ##           if 1 (Mean Distance); if 2 (Max Distance)
-## radius = the maximum distance to be calculated (set it very 
-##           small, if the series are categorical in nature
+## radius =  distance to accept two points as recurrent (set it very 
+##           small, if the series are categorical in nature)
 ## normalize = rescale factor for source data; 
 ##           if 1 (Unit interval); if 2 (z-score) 
 ## mindiagline = set a minimum diagonal line length
 ## mindiagline = set a minimum vertical line length
 
-# delay = 1; embed = 1; rescale = 1; radius = 0.001;
-# normalize = 0; mindiagline = 2; minvertline = 2;
-#  whiteline = FALSE # - flag to compute or not white vertical lines
-#                    in the recurrence plot. Note, white lines are not
+##  whiteline = FALSE # - flag to compute or not white vertical lines
+##                    in the recurrence plot. Note, white lines are not
 ##                    yet used to derive any particular measure
-#  recpt = FALSE # - flag to indicate whether the input ts1 is already
+##  recpt = FALSE # - flag to indicate whether the input ts1 is already
 ##                a recurrence plot
+
 ## tw = the size of the Theiler Window, the default is 0
+## side = a string indicating whether the recurrence measures
+## should be calculated in the "upper" triangle of the matrix
+## "lower" triangle of the matrix, on the "whole" matrix
+
+## checkl = a list with four arguments:
+##       $do = TRUE|FALSE; normalize (or not) the length of ts
+## if $do = TRUE, then the arguments of checkts() needs to be passed.
+##    $datatype = (numerical, categorical) - nature of ts
+##    $thrshd: number of timepoints we accept two ts to be different
+##    $pad: whether the two series have to be padded (TRUE) or chopped
+
+## try below
+
 ## ts1 = c(0,0,1,1,0,0)
 ## ts2 = c(2,2,1,1,2,2)
-## ts1 = c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1)
-## ts2 = c(2, 2, 1, 1, 2, 2, 1, 1, 0, 0)
+#  ts1 = c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1)
+#  ts2 = c(1,1, 2, 2, 0, 0, 1, 2)
+#delay = 1; embed = 1; rescale = 1; radius = 0.001;
+#normalize = 0; mindiagline = 2; minvertline = 2;
+#tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
+#checkl = list(do = TRUE, thrshd = 3, datatype = "categorical",
+#    pad = TRUE)
 
-packageName <- 'crqa'
+#crqa(ts2, ts1, delay, embed, rescale, radius, normalize, mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
+
+.packageName <- 'crqa'
 
 crqa <- function(ts1, ts2, delay, embed, rescale,
                  radius, normalize, mindiagline, minvertline,
-                 tw, whiteline, recpt){
+                 tw = 0, whiteline = F, recpt = F, side = "both",
+                 checkl = list(do = F)){
 
-    if( missing(tw) ){ tw = 0} ## default for Theiler window
+    ## passing a few default above
+    # if( missing(tw) ){ tw = 0} -> not working
 
     v11 = v21 = NULL ## stupid initializations to please CRAN
     
-   ## require("fields") ## to compute the Euclidean distance matrix
-   ## require("Matrix")  ## to manipulate sparse matrices 
+    # require("fields")  ## to compute the Euclidean distance matrix
+    # require("Matrix")  ## to manipulate sparse matrices 
 
 
     ## check if the input is a recurrence plot 
     if (recpt == FALSE){
-
     
         ts1 = as.vector(as.matrix(ts1)) ## make sure data is a vector
         ts2 = as.vector(as.matrix(ts2))
     
         if (is.matrix(ts1)){ stop("Your data must consist of a single column of data.")}  
-        if (is.matrix(ts2)){ stop("Your data must consist of a single column of data.")}
-    
-    
-    ##chop of sequences if they are of different lengths
-    
-        if (length(ts1) != length(ts2)){
-            shortest = min(c(length(ts1), length(ts2)) );
-            ts1 = ts1[1:shortest];
-            ts2 = ts2[1:shortest];
+        if (is.matrix(ts2)){ stop("Your data must consist of a single column of data.")}      
+
+        ## check the length of the sequences and decide if they have
+        ## to be normalized to the same length.
+        
+        if (checkl$do == TRUE){
+            
+            tsnorm = checkts(ts2, ts1, checkl$datatype,
+                checkl$thrshd, checkl$pad)
+
+            if (tsnorm[[2]] == FALSE){
+                stop("Time-series difference longer than threshold. Increase threshold, or set checkl$do = FALSE avoiding normalization of ts")
+                 } else {
+                     ts1 = tsnorm[[1]][,1]
+                     ts2 = tsnorm[[1]][,2]
+                 }
+        
         }
+           
+        
     
-    ##rescale the data if really necessary
+        ##rescale the data if really necessary
         
         if (normalize > 0){
             switch (normalize,
-                    {1 
+                    {1
+                     ## unit-interval
                      ts1 = (ts1 - min(ts1));
                      ts1 = ts1 / max(ts1);
                      ts2 = (ts2 - min(ts2));
                      ts2 = ts2 / max(ts2);},
                     
-                    {2                      
-                     ts1 = (ts1 - mean(ts1))/sd(ts1) # zscore(ts1, na.rm = TRUE, robust = FALSE); ## using R.basics
-                     ts2 = (ts2 - mean(ts2))/sd(ts2) # zscore(ts2, na.rm = TRUE, robust = FALSE)
+                    {2                     
+                     ## z-score                    
+                     ts1 = (ts1 - mean(ts1))/sd(ts1)                    
+                     ts2 = (ts2 - mean(ts2))/sd(ts2)
                  }
                     )
         }
@@ -127,7 +159,11 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         
         
         ## Compute euclidean distance matrix
-        vlength = length(v11) ## just to have the length of matrix saved
+        v1l = length(v11)
+        v2l = length(v21)
+
+        
+        ## just to have the length of matrix saved
         dm = rdist(dimts1,dimts2);
         
         ## Find indeces of the distance matrix that fall
@@ -149,13 +185,18 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         } else { dmrescale = dm }
         ## Compute recurrence matrix
         
-        ind = which(dmrescale <= radius, arr.ind=T);
+        ind = which(dmrescale <= radius, arr.ind = TRUE);
         r = ind[,1]; c = ind[,2]
 
     } else { ## take as input an RP directly
 
-        vlength = nrow(ts1)
-        ind = which(ts1 > 0, arr.ind = T)
+        ## as usual R needs fiddly code to make sure about identify of data
+        ts1 = matrix(as.logical(ts1), ncol = ncol(ts1))
+        v1l = nrow(ts1); v2l = ncol(ts1)        
+
+        ## matrix needs to be logical
+        ind = which(ts1 > 0, arr.ind = TRUE)
+
         ## just a trick to reduce the number of lines
         ## of the code
         r = ind[,1]; c = ind[,2]
@@ -163,7 +204,8 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
     }
     
     if (length(r) != 0 & length(c) != 0){ ##avoid cases with no recurrence
-        S = sparseMatrix(r, c, dims = c(vlength, vlength))
+
+        S = sparseMatrix(r, c, dims = c(v1l, v2l))
         ## this is the recurrent plot
         ## transpose it to make identical to Marwan
         S = t(S)
@@ -172,13 +214,32 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         ## Marwan blanks out the recurrence along the diag
         S = theiler(S, tw)
 
+        if (side == "upper"){
+            ## if only the upper side is of interest
+            ## it blanks out the lowest part
+            S = as.matrix(S)
+            S[lower.tri(S, diag = TRUE)] = 0
+            S = Matrix(S, sparse = TRUE)
+        }
+
+        if (side == "lower"){
+            ## viceversa
+            S = as.matrix(S)
+            S[upper.tri(S, diag = TRUE)] = 0
+            S = Matrix(S, sparse = TRUE)
+        }
+
+        if (side == "both"){
+            ## just keep it as is.
+            S = S}
+        
         spdiagonalize = spdiags(S) ##  spdiags should have decent speed 
         B = spdiagonalize$B
         
         ##calculate percentage recurrence by taking all non-zeros
         
         numrecurs = length(which(B == TRUE));
-        percentrecurs = (numrecurs/((vlength^2)))*100;
+        percentrecurs = (numrecurs/((v1l*v2l)))*100;
         
 ####################################################################
 ####################################################################
@@ -263,16 +324,16 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
             lam = 0; TT = 0; RP = NA
         }
         
-        results = list(rec = percentrecurs, det = pdeter, 
-            nrline = numdiaglines, maxline = maxline, 
-            meanline = meanline, entropy = entropy, 
-            relEntropy = relEntropy,
-            lam = lam, TT = TT, RP = S)
+        results = list(RR = percentrecurs, DET = pdeter, 
+            NRLINE = numdiaglines, maxL = maxline, 
+            L = meanline, ENTR = entropy, 
+            rENTR = relEntropy,
+            LAM = lam, TT = TT, RP = S)
         
-    } else { print (paste ("No recurrence found") )
-             results = list(rec = 0, det = NA, nrline = 0, maxline = 0, 
-                 meanline = 0, entropy = NA, relEntropy = NA,
-                 lam = NA, TT = NA, RP = NA)}  
+    } else { # print (paste ("No recurrence found") )
+             results = list(RR = 0, DET = NA, NRLINE = 0,
+                 maxL = 0, L = 0, ENTR = NA, rENTR = NA,
+                 LAM = NA, TT = NA, RP = NA)}  
     
     return (results)
     

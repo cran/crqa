@@ -14,7 +14,7 @@
   extracted (explained below).}
 \usage{
 crqa(ts1, ts2, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, tw, whiteline, recpt)
+mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -43,8 +43,17 @@ mindiagline, minvertline, tw, whiteline, recpt)
     or not (FALSE) empty vertical lines.}
   \item{recpt}{A logical flag indicating whether
     measures of cross-recurrence are calculated directly
-    from a recurrent plot (TRUE) or not (FALSE).
-  }
+    from a recurrent plot (TRUE) or not (FALSE).}
+  \item{side}{A string indicating whether recurrence measures
+    should be calculated in the 'upper' triangle of the RP
+    'lower' triangle of the matrix, or 'both'.
+    LOC is automatically excluded for 'upper' and 'lower'.}
+  \item{checkl}{A list with four arguments:
+      do = TRUE|FALSE; normalize (or not) the length of ts
+      if do == TRUE, then the arguments of checkts() needs to be passed.
+      datatype = (numerical, categorical) - nature of ts
+      thrshd: number of timepoints we tollerate difference between ts
+      pad: the two series have to be padded (TRUE) or chopped (FALSE)}	
 }
 
 \details{
@@ -59,22 +68,22 @@ mindiagline, minvertline, tw, whiteline, recpt)
   plot. Otherwise, the values for the output arguments will be
   either 0 or NA.
   
-  \item{rec}{The percentage of recurrent points falling within
+  \item{RR}{The percentage of recurrent points falling within
     the specified radius (range between 0 and 100)}
-  \item{det}{Proportion of recurrent points forming diagonal
+  \item{DET}{Proportion of recurrent points forming diagonal
     line structures.}
-  \item{nrline}{The total number of lines in the recurrent plot}
-  \item{maxline}{The length of the longest diagonal line
+  \item{NRLINE}{The total number of lines in the recurrent plot}
+  \item{maxL}{The length of the longest diagonal line
     segment in the plot, excluding the main diagonal}
-  \item{meanline}{The average length of line structures}
-  \item{entropy}{Shannon information entropy of
+  \item{L}{The average length of line structures}
+  \item{ENTR}{Shannon information entropy of
     diagonal line lengths longer than the minimum length}
-  \item{relEntropy}{Entropy measure normalized by the number of
+  \item{rENTR}{Entropy measure normalized by the number of
     lines observed in the plot. Handy to compare across contexts
     and conditions}
-  \item{lam}{Proportion of recurrent points forming vertical
+  \item{LAM}{Proportion of recurrent points forming vertical
     line structures}
-  \item{tt}{The average length of vertical line structures}
+  \item{TT}{The average length of vertical line structures}
 }
 
 \author{Moreno I. Coco (moreno.cocoi@gmail.com)}
@@ -83,10 +92,10 @@ mindiagline, minvertline, tw, whiteline, recpt)
   version provided by Rick Dale, and created during 
   the Non-Linear Methods for Psychological Science
   summer school held at the University of Cincinnati
-  in 2011}
+  in 2012}
 
-\seealso{ \code{\link{tt}}, \code{\link{spdiags}},
-\code{\link{simts}}}
+\seealso{ \code{\link{tt}}, \code{\link{checkts}},
+  \code{\link{spdiags}}, \code{\link{simts}}}
 
 \examples{
 
@@ -98,12 +107,15 @@ ts1 = tS[1,]; ts2 = tS[2,]
 ## (e.g., RDts1, RDts2)
 
 ## initialize the parameters
-delay = 1; embed =  1 ; rescale =  1; radius = 0.00001;
-normalize = 0; minvertline = 2; mindiagline = 2;
-tw = 0; whiteline = FALSE; recpt = FALSE
 
-ans = crqa(ts1, ts2, delay, embed, rescale, radius,
-normalize, minvertline, mindiagline, tw, whiteline,recpt)
+delay = 1; embed = 1; rescale = 1; radius = 0.001;
+normalize = 0; mindiagline = 2; minvertline = 2;
+tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
+checkl = list(do = FALSE, thrshd = 3, datatype = "categorical",
+    pad = TRUE)
+
+ans = crqa(ts2, ts1, delay, embed, rescale, radius, normalize,
+mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
 
 print(ans[1:9]) ## last argument of list is the cross-recurrence plot
 RP = ans$RP ## take out RP

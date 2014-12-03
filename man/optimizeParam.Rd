@@ -14,7 +14,7 @@
   
 }
 \usage{
-optimizeParam(ts1, ts2, par)
+optimizeParam(ts1, ts2, par, min.rec, max.rec)
 }
 
 \arguments{
@@ -27,17 +27,20 @@ optimizeParam(ts1, ts2, par)
     the two series.
     steps = a sequence of points (e.g., seq(1, 10, 1))
     used to look ahead local minima.
-    cut.del = a sequence of points referring to
-    the delays evaluated when mutual information
-    between the two serie is estimated.
+    fnnpercent = the percentage of information gained,
+    relative to the first embedding dimension, when higher embeddings
+    are considered. 
     radiusspan = a constant setting the granularity of 
     radius unit to explore, relative to the standard deviation 
     of the distance between the two series. (Larger value = smaller units) 
     radiussample = the number of equally spaced units 
     of the radius to explore. (Larger value = more units = 
-    computationally more expensive) 
-
-	} 
+    computationally more expensive)}
+  \item{min.rec}{The minimum value of recurrence accepted.
+    Default = 2}
+  \item{max.rec}{The maximum value of recurrence accepted.
+    Default = 5}
+  
 }
 
 \details{
@@ -73,12 +76,13 @@ optimizeParam(ts1, ts2, par)
 }
 
 \note{As \code{optimizeParam} uses \code{crqa} to estimate
-  the parameters: the additional arguments \code{normalize,
+  the parameters: the additional arguments normalize,
     rescale, mindiagline, minvertline, whiteline,
-    recpt} should be supplied in the par list.
+    recpt should be supplied in the par list.
     Set up relatively large radiusspan (e.g. 100), 
     and relatively small radiussample (e.g., 10), 
-    for a decent coverage of radius values.}
+    for a decent coverage of radius values.
+  }
 
 \value{
   
@@ -97,7 +101,8 @@ optimizeParam(ts1, ts2, par)
 
 }
 
-\author{Moreno I. Coco (moreno.cocoi@gmail.com)}
+\author{Moreno I. Coco (moreno.cocoi@gmail.com) and James A. Dixon
+(james.dixon@uconn.edu)}
 
 \seealso{ \code{\link{crqa}}, \code{\link{wincrqa}}}
 
@@ -105,18 +110,19 @@ optimizeParam(ts1, ts2, par)
 
 ## initialize the parameters
 
-par = list(lgM =  20, steps = seq(1, 6, 1),
-cut.del = seq(1, 40,1), 
+par = list(lgM =  20, steps = seq(1, 6, 1), 
 radiusspan = 100, radiussample = 40, 
 normalize = 0, rescale = 1, mindiagline = 2, 
 minvertline = 2, tw = 0, whiteline = FALSE, 
-recpt = FALSE)
+recpt = FALSE, fnnpercent = 10)
+
 
 ## generate two random uniform series
+
 ts1 = runif(100)
 ts2 = runif(100)
 
-ans = optimizeParam(ts1,ts2,par)
+ans = optimizeParam(ts1,ts2,par, min.rec = 2, max.rec = 5)
 print(ans)
 
 ## utilize leftmov, rightmov for an application to real-data

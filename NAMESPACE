@@ -15,7 +15,7 @@ export(CTcrqa,
     windowdrp)
 
 import(tseriesChaos,
-       fields)
+       fields,
+       pracma)
 
-importFrom(Matrix,Matrix)
-importFrom(Matrix,t)
+importFrom("Matrix", diag, t, Matrix, sparseMatrix, rBind)

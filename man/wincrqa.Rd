@@ -14,19 +14,18 @@
 
 \usage{
 
-wincrqa(x, y, step, windowsize, lagwidth, delay, embed, rescale,
-radius, normalize, mindiagline, minvertline, tw, whiteline, recpt)
+wincrqa(ts1, ts2, windowstep, windowsize, delay, embed, rescale,
+radius, normalize, mindiagline, minvertline, tw, whiteline, trend)
 
 }
 
 
 \arguments{
 
-  \item{x}{First time-series}
-  \item{y}{Second time-series}
-  \item{step}{Interval by which the window is moved.}
+  \item{ts1}{First time-series}
+  \item{ts2}{Second time-series}
+  \item{windowstep}{Interval by which the window is moved.}
   \item{windowsize}{The size of the window}  
-  \item{lagwidth}{The number of delays to be considered}
   \item{delay}{The delay unit by which the series are lagged.}
   \item{embed}{The number of embedding dimension for
     phase-reconstruction, i.e., the lag intervals.}
@@ -47,9 +46,8 @@ radius, normalize, mindiagline, minvertline, tw, whiteline, recpt)
   \item{tw}{The size of the Theiler window}
   \item{whiteline}{A logical flag to calculate (TRUE)
     or not (FALSE) empty vertical lines.}
-  \item{recpt}{A logical flag indicating whether
-    measures of cross-recurrence are calculated directly
-    from a recurrent plot (TRUE) or not (FALSE).}
+  \item{trend}{A logical flag indicating whether
+    the TREND should be computed}
   
 }
 
@@ -69,7 +67,14 @@ radius, normalize, mindiagline, minvertline, tw, whiteline, recpt)
 
 \note{If no-recurrence is found in a window,
   that window will not be saved, and a message
-  about it will be warned.}
+  about it will be warned.
+  TREND is implemented following a solution proposed
+  by Norbert Marwan, and translated here in R,
+  for those who have asked him.
+  He, however warns that this measure might strongly depend
+  on the chosen settings to calculate crq.
+  Relying on such measure can, therefore, produce misleading results.
+  }
 
 
 \seealso{\code{\link{crqa}}}
@@ -77,24 +82,25 @@ radius, normalize, mindiagline, minvertline, tw, whiteline, recpt)
 \examples{
 
 ## simulate two dichotomous series
-tS = simts(0.25, 0.05, 0.2, 0.2, 0.25, 200)
+tS = simts(0.25, 0.05, 0.2, 0.2, 0.25, 100)
 ts1 = tS[1,]; ts2 = tS[2,]
 
 ## check data(crqa) for alternative data
 ## (e.g., RDts1, RDts2)
 
-step =  10; windowsize =  100; lagwidth = 20;
+windowstep =  10; windowsize =  50; 
 delay = 1; embed =  1 ; rescale =  1;
 radius = 0.00001; normalize = 0;
 minvertline = 2; mindiagline = 2;
-tw = 0; whiteline = FALSE; recpt = FALSE
+tw = 0; whiteline = FALSE; trend = TRUE;
 
-## it returns matrix with all measures for the
-## different windows where values are found
+## it returns a list with:
+## [[1]] the measures for the different windows where  values are found
+## [[2]] the trend over time. 
 
-res = wincrqa(ts1, ts2, step, windowsize,
-lagwidth, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, tw, whiteline, recpt)
+res = wincrqa(ts1, ts2, windowstep, windowsize,
+delay, embed, rescale, radius, normalize, mindiagline,
+minvertline, tw, whiteline, trend)
 
 str(res)
 

@@ -21,7 +21,8 @@
 ## cons: it does not return the full spectrum of measures
 ## from the recurrence plots
 
-## type = 2; a recurrence matrix is calculated and several measures of recurrence: meanline, maxline, det, entropy ... are extracted from the matrix
+## type = 2; a recurrence matrix is calculated and several measures of
+## recurrence: meanline, maxline, det, entropy ... are extracted from the matrix
 ## again recurrence can be computed both on the whole profile
 ## and based on the window.
 
@@ -58,25 +59,30 @@
 runcrqa <- function(ts1, ts2, par){
 
     datatype = thrshd = type = method = ws = radius = windowsize =
-    lagwidth = delay = rescale = normalize = mindiagline = minvertline =
-        tw = whiteline = recpt = NULL
+    windowstep = delay = rescale = normalize = mindiagline =
+        minvertline = lagwidth = tw = whiteline = recpt = pad = NULL
     ## stupid initialization to please CRAN
     
-    for (v in 1:length(par)) assign(names(par)[v], par[[v]]) ## assign parameters
+    for (v in 1:length(par)) assign(names(par)[v], par[[v]])
+    ## assign parameters
 
-    tryCatch({ ## set up a tryCatch to detach parameters values if errors occur
+    tryCatch({
+        ## set up a tryCatch to detach parameters values if errors occur
 
-        res = checkts(ts1, ts2, datatype, thrshd) ## first check that sequences
-                                                  ## have the same length
+        res = checkts(ts1, ts2, datatype, thrshd, pad)
+        ## first check that sequences
+        ## have the same length
  
         if ( res[[2]] == TRUE ){
 
             tsnorm = res[[1]]
             ts1 = tsnorm[,1]; ts2 = tsnorm[,2]
     
-            switch(type, #   Ways of calculating recurrence
+            switch(type,
+                   ##   Ways of calculating recurrence
     
-                   {1     ## Quick Recurrence Profile (only diagonal)
+                   {1
+                    ## Quick Recurrence Profile (only diagonal)
                     
                     if (method == "profile"){
                  
@@ -100,16 +106,17 @@ runcrqa <- function(ts1, ts2, par){
                     if (method == "profile"){
                 
                         res = crqa(ts1, ts2, delay, embed,
-                            rescale, radius, normalize, mindiagline, minvertline,
-                            tw, whiteline, recpt)
+                            rescale, radius, normalize, mindiagline,
+                            minvertline, tw, whiteline, recpt)
                         
                     }
 
                     if (method == "window"){
                         
-                        res = wincrqa(ts1, ts2, step, windowsize, lagwidth, delay,
-                            embed, rescale, radius, normalize, mindiagline, minvertline,
-                            tw, whiteline, recpt)
+                        res = wincrqa(ts1, ts2, windowstep,
+                            windowsize, delay, embed, rescale,
+                            radius, normalize, mindiagline, minvertline,
+                            tw, whiteline, trend = F)
               
                     }
                

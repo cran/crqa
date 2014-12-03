@@ -38,7 +38,7 @@
 \author{Moreno I. Coco
   (moreno.cocoi@gmail.com)}
 
-\details{This function is based on original MATLAB code
+\details{This function is based on MATLAB code
   written by Norbert Marwan, available in \code{crptoolbox}}
 
 \examples{
