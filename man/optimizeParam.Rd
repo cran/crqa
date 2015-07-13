@@ -25,17 +25,15 @@ optimizeParam(ts1, ts2, par, min.rec, max.rec)
     lgM = a constant indicating maximum lag to inspect
     when calculating average mutual information between
     the two series.
-    steps = a sequence of points (e.g., seq(1, 10, 1))
-    used to look ahead local minima.
     fnnpercent = the percentage of information gained,
     relative to the first embedding dimension, when higher embeddings
     are considered. 
-    radiusspan = a constant setting the granularity of 
-    radius unit to explore, relative to the standard deviation 
-    of the distance between the two series. (Larger value = smaller units) 
-    radiussample = the number of equally spaced units 
-    of the radius to explore. (Larger value = more units = 
-    computationally more expensive)}
+    radiusspan = the number of radi explored, relative to the
+    standard deviation  of the distance between the two series.
+    typeami = decide on the minimum average mutual information.
+    If typeami  == mindip, then we select the lag at which minimal
+    information is observed. If typeami == maxlag, then we select
+    the maximum lag at which minimal information is observed.}
   \item{min.rec}{The minimum value of recurrence accepted.
     Default = 2}
   \item{max.rec}{The maximum value of recurrence accepted.
@@ -114,7 +112,7 @@ par = list(lgM =  20, steps = seq(1, 6, 1),
 radiusspan = 100, radiussample = 40, 
 normalize = 0, rescale = 1, mindiagline = 2, 
 minvertline = 2, tw = 0, whiteline = FALSE, 
-recpt = FALSE, fnnpercent = 10)
+recpt = FALSE, fnnpercent = 10, typeami = "mindip")
 
 
 ## generate two random uniform series
@@ -122,7 +120,7 @@ recpt = FALSE, fnnpercent = 10)
 ts1 = runif(100)
 ts2 = runif(100)
 
-ans = optimizeParam(ts1,ts2,par, min.rec = 2, max.rec = 5)
+ans = optimizeParam(ts1, ts2, par, min.rec = 2, max.rec = 5)
 print(ans)
 
 ## utilize leftmov, rightmov for an application to real-data

@@ -2,6 +2,7 @@
 ## crqa, adapted from a Matlab code developed at
 ## summer school of: Nonlinear Methods for Psychological Science
 ## organized by the University of Cincinnati, 2012
+
 ## next time i check change sd(matrix) with sapply(matrix, sd)
 
 ## arguments to pass to crqa:
@@ -41,11 +42,11 @@
 ## ts2 = c(2,2,1,1,2,2)
 #  ts1 = c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1)
 #  ts2 = c(1,1, 2, 2, 0, 0, 1, 2)
-#delay = 1; embed = 1; rescale = 1; radius = 0.001;
-#normalize = 0; mindiagline = 2; minvertline = 2;
-#tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-#checkl = list(do = TRUE, thrshd = 3, datatype = "categorical",
-#    pad = TRUE)
+# delay = 1; embed = 1; rescale = 1; radius = 0.001;
+# normalize = 0; mindiagline = 2; minvertline = 2;
+# tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
+# checkl = list(do = TRUE, thrshd = 3, datatype = "categorical",
+#     pad = TRUE)
 
 #crqa(ts2, ts1, delay, embed, rescale, radius, normalize, mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
 
@@ -74,6 +75,7 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
         if (is.matrix(ts1)){ stop("Your data must consist of a single column of data.")}  
         if (is.matrix(ts2)){ stop("Your data must consist of a single column of data.")}      
 
+        
         ## check the length of the sequences and decide if they have
         ## to be normalized to the same length.
         
@@ -90,8 +92,11 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
                  }
         
         }
-           
-        
+
+        ## check that the length of the series is not shorter than the phase embed*delay
+
+        if (length(ts1) < embed*delay){ stop("Phase-space (embed*delay) longer than ts1")}  
+        if (length(ts2) < embed*delay){ stop("Phase-space (embed*delay) longer than ts2")}      
     
         ##rescale the data if really necessary
         

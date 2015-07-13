@@ -58,8 +58,8 @@
 
 runcrqa <- function(ts1, ts2, par){
 
-    datatype = thrshd = type = method = ws = radius = windowsize =
-    windowstep = delay = rescale = normalize = mindiagline =
+    datatype = thrshd = type = method = ws = radius = windowstep = windowsize =
+        step = embed =  delay = rescale = normalize = mindiagline =
         minvertline = lagwidth = tw = whiteline = recpt = pad = NULL
     ## stupid initialization to please CRAN
     

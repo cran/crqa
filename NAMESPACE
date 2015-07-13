@@ -5,6 +5,7 @@ export(CTcrqa,
     checkts,
     crqa,
     drpdfromts,
+    lorenzattractor,
     optimizeParam,
     runcrqa,
     simts,
@@ -16,6 +17,9 @@ export(CTcrqa,
 
 import(tseriesChaos,
        fields,
+       plot3D,
        pracma)
 
 importFrom("Matrix", diag, t, Matrix, sparseMatrix, rBind)
+importFrom("stats", sd, median, rnorm, runif)  
+importFrom("utils", tail)
