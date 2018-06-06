@@ -2,8 +2,8 @@ Package: crqa
 Type: Package
 Title: Cross-Recurrence Quantification Analysis for Categorical and
         Continuous Time-Series
-Version: 1.0.6
-Date: 2015-07-13
+Version: 1.0.7
+Date: 2018-06-05
 Author: Moreno I. Coco and Rick Dale with contributions of James D. Dixon and John Nash
 Maintainer: Moreno I. Coco <moreno.cocoi@gmail.com>
 Description: 
@@ -13,14 +13,16 @@ Description:
     for profiling cross-recurrence, i.e., only looking
     at the diagonal recurrent points, as well as more
     in-depth measures of the whole cross-recurrence plot,
-    e.g., recurrence rate.
+    e.g., recurrence rate. Please refer to by Coco and Dale (2014) 
+    <doi:10.3389/fpsyg.2014.00510> for further details about the method.
 Depends: R (>= 3.0.0), Matrix, tseriesChaos, fields, plot3D, pracma
 License: GPL (>= 2)
 Collate: 'ami.R' 'CTcrqa.R' 'calcphi.R' 'checkts.R' 'crqa.R'
-        'drpdfromts.R' 'lorenzattractor.R' 'optimizeParam.R'
+        'drpdfromts.R' 'lorenzattractor.R' 'optimizeParam.R' 'plotRP.R'
         'runcrqa.R' 'simts.R' 'spdiags.R' 'takephi.R' 'theiler.R'
         'tt.R' 'wincrqa.R' 'windowdrp.R'
+RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2015-07-15 09:53:51 UTC; root
+Packaged: 2018-06-06 09:01:48 UTC; mcoco
 Repository: CRAN
-Date/Publication: 2015-07-15 13:23:45
+Date/Publication: 2018-06-06 09:27:55 UTC

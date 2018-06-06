@@ -57,93 +57,99 @@
 .packageName <- 'crqa'
 
 runcrqa <- function(ts1, ts2, par){
-
-    datatype = thrshd = type = method = ws = radius = windowstep = windowsize =
-        step = embed =  delay = rescale = normalize = mindiagline =
-        minvertline = lagwidth = tw = whiteline = recpt = pad = NULL
-    ## stupid initialization to please CRAN
+  
+  datatype = thrshd = type = method = ws = radius = windowstep = windowsize =
+    step = embed =  delay = rescale = normalize = mindiagline =
+    minvertline = lagwidth = tw = whiteline = recpt = pad = NULL
+  ## stupid initialization to please CRAN
+  
+  for (v in 1:length(par)) assign(names(par)[v], par[[v]])
+  ## assign parameters
+  
+  tryCatch({
+    ## set up a tryCatch to detach parameters values if errors occur
     
-    for (v in 1:length(par)) assign(names(par)[v], par[[v]])
-    ## assign parameters
-
-    tryCatch({
-        ## set up a tryCatch to detach parameters values if errors occur
-
-        res = checkts(ts1, ts2, datatype, thrshd, pad)
-        ## first check that sequences
-        ## have the same length
- 
-        if ( res[[2]] == TRUE ){
-
-            tsnorm = res[[1]]
-            ts1 = tsnorm[,1]; ts2 = tsnorm[,2]
+    res = checkts(ts1, ts2, datatype, thrshd, pad)
+    ## first check that sequences
+    ## have the same length
     
-            switch(type,
-                   ##   Ways of calculating recurrence
-    
-                   {1
-                    ## Quick Recurrence Profile (only diagonal)
-                    
-                    if (method == "profile"){
+    if ( res[[2]] == TRUE ){
+      
+      tsnorm = res[[1]]
+      ts1 = tsnorm[,1]; ts2 = tsnorm[,2]
+      
+      switch(type,
+             ##   Ways of calculating recurrence
+             
+             {1
+               ## Quick Recurrence Profile (only diagonal)
+               
+               if (method == "profile"){
                  
-                        res = drpdfromts(ts1, ts2, ws, datatype, radius)
-              
-                    }
-
-                    
-                    if (method == "window"){
+                 res = drpdfromts(ts1, ts2, ws, datatype, radius = 0.001, 
+                                  delay = 1, embed = 1, rescale = 0,
+                                  normalize = 0, mindiagline = 2, 
+                                  minvertline = 2, tw = 0)
                  
-                        res = windowdrp(ts1, ts2, step, windowsize,
-                            lagwidth, datatype, radius)
-              
-                    }
-              
-                }, ## close type one 
-       
-                   {2  ## CRQA in-depth measures (maxline, determinims, etc.)
-              
-              
-                    if (method == "profile"){
-                
-                        res = crqa(ts1, ts2, delay, embed,
+               }
+               
+               
+               if (method == "window"){
+                 
+                 res = windowdrp(ts1, ts2, step, windowsize,
+                                 lagwidth, datatype, radius, delay = 1, 
+                                 embed = 1, rescale, normalize = 0, 
+                                 mindiagline = 2, minvertline = 2,
+                                 tw = 0)
+                 
+               }
+               
+             }, ## close type one 
+             
+             {2  ## CRQA in-depth measures (maxline, determinims, etc.)
+               
+               
+               if (method == "profile"){
+                 
+                 res = crqa(ts1, ts2, delay, embed,
                             rescale, radius, normalize, mindiagline,
                             minvertline, tw, whiteline, recpt)
-                        
-                    }
-
-                    if (method == "window"){
-                        
-                        res = wincrqa(ts1, ts2, windowstep,
-                            windowsize, delay, embed, rescale,
-                            radius, normalize, mindiagline, minvertline,
-                            tw, whiteline, trend = F)
-              
-                    }
+                 
+               }
                
-                } ## close type 2
+               if (method == "window"){
+                 
+                 res = wincrqa(ts1, ts2, windowstep,
+                               windowsize, delay, embed, rescale,
+                               radius, normalize, mindiagline, minvertline,
+                               tw, whiteline, trend = F)
+                 
+               }
+               
+             } ## close type 2
              
-                   ) ## close the switch option
+      ) ## close the switch option
       
-        }
-
-        else { print (paste ("Sequences differ by", res[[1]], "units") )
-           }
-  
-#        print( paste( "Finished computing!") )
-  
-        return(res)
-  
-    }, warning = function(war) { ## here exception can be handled
+    }
+    
+    else { print (paste ("Sequences differ by", res[[1]], "units") )
+    }
+    
+    #        print( paste( "Finished computing!") )
+    
+    return(res)
+    
+  }, warning = function(war) { ## here exception can be handled
     
     # warning handler picks up where error was generated
     # maybe an handler with Restarts point would be better
-        print(paste("WARNING:  ", war))
-
-    }, error = function(err) {
- 
-     # warning handler picks up where error was generated
-        print(paste("ERROR:  ",err))
-
-    })
-
+    print(paste("WARNING:  ", war))
+    
+  }, error = function(err) {
+    
+    # warning handler picks up where error was generated
+    print(paste("ERROR:  ",err))
+    
+  })
+  
 }

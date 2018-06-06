@@ -20,7 +20,7 @@ tt <- function(x, minvertline, whiteline){
     xb = x ## just copy over x in .m use of double
     ## pad the list row with zeros
     
-    xb = rBind(xb, rep(0, ncol(x)), deparse.level = 0) #xb(end+1,:) = 0;
+    xb = rbind(xb, rep(0, ncol(x)), deparse.level = 0) #xb(end+1,:) = 0;
     xb = as.vector(xb) ## make it a vector
     z = diff(xb)
     z0 = which(z == 1)  ## begin of black sequence
@@ -88,7 +88,7 @@ tt <- function(x, minvertline, whiteline){
         matind = matrix(as.numeric( unlist(vertline) ),
             byrow = TRUE, ncol = 2)
         ## put the indeces in a matrix
-        matind = rBind(matind, rep(0,ncol(matind))) ## add one column for padding
+        matind = rbind(matind, rep(0,ncol(matind))) ## add one column for padding
         reprw = which(diff(matind)[,1] != 0) ## get the length of column
         unind = matind[reprw, ] 
         
@@ -108,7 +108,7 @@ tt <- function(x, minvertline, whiteline){
             }
         }
         
-        xw = rBind(xw, rep(1, ncol(xw)), deparse.level = 0)    
+        xw = rbind(xw, rep(1, ncol(xw)), deparse.level = 0)    
         
         zw = diff(as.vector(xw)) ;
         

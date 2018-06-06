@@ -84,6 +84,7 @@ mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
   \item{LAM}{Proportion of recurrent points forming vertical
     line structures}
   \item{TT}{The average length of vertical line structures}
+  \item{RP}{The Recurrence Plot sparse matrix data}
 }
 
 \author{Moreno I. Coco (moreno.cocoi@gmail.com)}

@@ -37,8 +37,8 @@ wincrqa <- function(ts1, ts2, windowstep, windowsize, delay, embed,
     for (i in points){
         tsp = tsp +1
         
-        ts1win = ts1[i:(i+windowsize)];
-        ts2win = ts2[i:(i+windowsize)];
+        ts1win = ts1[i:(i+windowsize - 1)];
+        ts2win = ts2[i:(i+windowsize - 1)];
         
         ans = crqa(ts1win, ts2win, delay, embed, rescale,
             radius, normalize, mindiagline, minvertline, tw,

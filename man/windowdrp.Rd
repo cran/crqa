@@ -16,14 +16,16 @@
 }
 
 \usage{
-windowdrp(x, y, step, windowsize, lagwidth, datatype, radius)
+windowdrp(ts1, ts2, step, windowsize, lagwidth, datatype, 
+radius, delay, embed, rescale, normalize, mindiagline, minvertline,
+tw)
 
 }
 
 \arguments{
 
-  \item{x}{First time-series}
-  \item{y}{Second time-series}
+  \item{ts1}{First time-series}
+  \item{ts2}{Second time-series}
   \item{step}{Interval by which the window is
     moved.}
   \item{windowsize}{The size of the window}  
@@ -34,6 +36,23 @@ windowdrp(x, y, step, windowsize, lagwidth, datatype, radius)
   \item{radius}{For numeric time-series, the
     cutoff distance to accept or reject
     two-points as recurrent}
+  \item{delay}{The delay unit by which the series are lagged.}
+  \item{embed}{The number of embedding dimension for
+    phase-reconstruction, i.e., the lag intervals.}
+  \item{rescale}{Rescale the distance matrix;
+    if rescale = 0 (do nothing);
+    if rescale = 1 (mean distance of entire matrix);
+    if rescale = 2 (maximum distance of entire matrix).}
+  \item{normalize}{Normalize the time-series;
+    if normalize = 0 (do nothing);
+    if normalize = 1 (Unit interval);
+    if normalize =  2 (z-score).}
+  \item{mindiagline}{A minimum diagonal length of
+    recurrent points. Usually set to 2, as it takes
+    a minimum of two points to define any line.}
+  \item{minvertline}{A minimum vertical length of
+    recurrent points.}
+  \item{tw}{The Theiler window parameter}
 
 }
   
@@ -67,10 +86,15 @@ windowdrp(x, y, step, windowsize, lagwidth, datatype, radius)
 
 data(crqa)
 
-par = list(type = 1, step =  20, windowsize =  50, lagwidth = 40,
-  method = "window", datatype = "categorical", thrshd = 8)
+ts1 = as.numeric(as.matrix(RDts1))
+ts2 = as.numeric(as.matrix(RDts2))
 
-ans = runcrqa(RDts1, RDts2, par)
+par = list(type = 1, step =  20, windowsize =  50, lagwidth = 40,
+           method = "window", datatype = "categorical", thrshd = 8,
+           radius = 0.001, delay = 1, embed = 1, rescale = 0, normalize = 0,
+           mindiagline = 2, minvertline = 2)
+
+ans = runcrqa(ts1, ts2, par)
 
 print(ans)
 

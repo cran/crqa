@@ -10,12 +10,13 @@
   observed, and the delay at which it occurred.
 }
 
-\usage{ drpdfromts(t1, t2, ws, datatype, radius) }
+\usage{ drpdfromts(ts1, ts2, ws, datatype, radius, 
+delay, embed, rescale, normalize, mindiagline, minvertline, tw) }
 
 \arguments{
   
-  \item{t1}{First time-series}
-  \item{t2}{Second time-series}
+  \item{ts1}{First time-series}
+  \item{ts2}{Second time-series}
   \item{ws}{A constant indicating the range of delays
     (positive and negative) to explore}
   \item{datatype}{A string indicating whether the
@@ -23,7 +24,23 @@
     datatype}
   \item{radius}{A threshold, cut-off, constant used
     to decide whether two points are recurrent or not.}
-  
+   \item{delay}{The delay unit by which the series are lagged.}
+  \item{embed}{The number of embedding dimension for
+    phase-reconstruction, i.e., the lag intervals.}
+  \item{rescale}{Rescale the distance matrix;
+    if rescale = 0 (do nothing);
+    if rescale = 1 (mean distance of entire matrix);
+    if rescale = 2 (maximum distance of entire matrix).}
+  \item{normalize}{Normalize the time-series;
+    if normalize = 0 (do nothing);
+    if normalize = 1 (Unit interval);
+    if normalize =  2 (z-score).}
+  \item{mindiagline}{A minimum diagonal length of
+    recurrent points. Usually set to 2, as it takes
+    a minimum of two points to define any line.}
+  \item{minvertline}{A minimum vertical length of
+    recurrent points.}
+  \item{tw}{The Theiler window parameter}
 }
 
 \value{
@@ -48,11 +65,13 @@
 data(crqa)
 
 res = drpdfromts(RDts1, RDts2, ws = 100,
-datatype = "categorical", radius = 0.000001)
+datatype = "categorical", radius = 0.001, 
+delay = 1, embed = 1, rescale = 0, normalize = 0, 
+mindiagline = 2, minvertline = 2, tw = 0)
 
 profile = res$profile
 
-plot(seq(1,length(profile),1),profile,type = "l", lwd = 5,
-     xaxt = "n", xlab = "Delays", ylab = "Recurrence")
+plot(seq(1,length(profile),1), profile, type = "l", lwd = 5,
+     xaxt = "n", xlab = "Lag", ylab = "Recurrence")
 
 }
