@@ -1,11 +1,11 @@
-6c44c4a171ab1f824f21d1b3d38b034a *DESCRIPTION
+6bcbc2c8b17ec3798ba9ee3f23dca705 *DESCRIPTION
 2f6e9ad950236ba3cacafd4b690c25d3 *NAMESPACE
 28ae7e1d4c946f1c5b80da067e9d2586 *R/CTcrqa.R
 e230734239b21353f445a08f903106a0 *R/ami.R
 fd4d3e5903396c9dd00c5d77bb712d2c *R/calcphi.R
 0c18c004eda963abd2e0271cc4251b8a *R/checkts.R
 b925c56b0647be8de58bbf6d01ed42a4 *R/crqa.R
-5b62f359dec3b531ec1b1e130b7985dc *R/drpdfromts.R
+22bbbe3a12891e2ae1d382ea3925d763 *R/drpdfromts.R
 30c90837f3d2ea2c8b30f65e70dbe15c *R/lorenzattractor.R
 54fc216a7d4803fd0f22056c237b9896 *R/optimizeParam.R
 9bd3234e08db1fa42b33b3a1c8ae3178 *R/plotRP.R
@@ -39,5 +39,5 @@ a7bbf18e5f6062c94babf3dc8f9c9e1e *man/theiler.Rd
 fafc650cd83a882a5004670ad0598a27 *man/tt.Rd
 c03845b1bf61a761d159f45f18d51fed *man/wincrqa.Rd
 5d9897d56131a135def4a8cd65511429 *man/windowdrp.Rd
-42c6b7fece6b71f1b98da39b096c8db2 *src/crqa_init.c
+e855afb600b4fcd14f84d1e7a6834d16 *src/init.c
 a9de526d2dd2130a3b2c4eae51b6c365 *src/jspd.f

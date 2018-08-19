@@ -38,8 +38,10 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
   }
   
   ## run full blown crqa
+  radius = 3
   res = crqa(ts2, ts1, delay, embed, rescale, radius, 
              normalize, mindiagline, minvertline, tw)
+  unlist(res[1:9])
   
   ## extract the RP
   RP = res$RP
@@ -47,7 +49,7 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
     len      = nrow(RP)-1 # the nrow of the RP
     lags     = -len:len   # the diagonal of the RP
     
-    RP      = matrix(as.numeric(RP), nrow = length(ts1), ncol = length(ts2))
+    RP      = matrix(as.numeric(RP), nrow = nrow(RP), ncol = ncol(RP))
     RP_form = unlist(lapply(split(RP, row(RP) - col(RP)), mean, na.rm = TRUE))
     wn      = which(lags >= -ws &  lags <= ws)
     
