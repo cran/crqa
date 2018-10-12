@@ -24,6 +24,7 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
     ts1     = as.character( as.matrix( ts1 ) )
     ts2     = as.character( as.matrix( ts2 ) )
     
+    ## apply convenient function to transform the levels of the categorical variables into numerics
     checked = checkts(ts1, ts2, datatype, thrshd = length(ts1), pad = FALSE)
     ts1     = checked[[1]][, 1]
     ts2     = checked[[1]][, 2]
@@ -38,11 +39,9 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
   }
   
   ## run full blown crqa
-  radius = 3
   res = crqa(ts2, ts1, delay, embed, rescale, radius, 
              normalize, mindiagline, minvertline, tw)
-  unlist(res[1:9])
-  
+
   ## extract the RP
   RP = res$RP
   if (class(RP) != "logical"){ # we have some point that recur
@@ -66,21 +65,3 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
   return( list(profile = drpd, maxrec = maxrec, maxlag = maxlag) )
   
 }
-
-# rm(list = ls())
-
-#data(crqa)
-
-#ts1 = as.numeric(as.matrix(RDts1))
-#ts2 = as.numeric(as.matrix(RDts2))
-
-#res = drpdfromts(ts1, ts2, ws = 100, datatype = "continuous", radius = 0.001, 
-#                 delay = 1, embed = 1, rescale = 0, normalize = 0, 
-#                 mindiagline = 2, minvertline = 2, tw = 0)
-
-#profile = res$profile
-
-#plot(seq(1,length(profile),1), profile, type = "l", lwd = 5,
-#     xaxt = "n", xlab = "Lag", ylab = "Recurrence")
-
-
