@@ -23,8 +23,11 @@
 .packageName <- 'crqa'
 
 wincrqa <- function(ts1, ts2, windowstep, windowsize, delay, embed,
-                    rescale, radius, normalize, mindiagline,
-                    minvertline, tw = 0, whiteline = F, trend = FALSE){
+                    radius = 0.001, rescale = 0,
+                    normalize = 0, mindiagline = 2, minvertline = 2,
+                    tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both', 
+                    method = 'crqa', metric = 'euclidean', 
+                    datatype = 'continuous', trend = FALSE){
 
     ## we do not expect as input a recurrent plot
     ts1 = as.vector(as.matrix(ts1));   ts2 = as.vector(as.matrix(ts2))
@@ -37,17 +40,18 @@ wincrqa <- function(ts1, ts2, windowstep, windowsize, delay, embed,
     for (i in points){
         tsp = tsp +1
         
-        ts1win = ts1[i:(i+windowsize - 1)];
-        ts2win = ts2[i:(i+windowsize - 1)];
+        ts1win = ts1[i:(i + windowsize - 1)];
+        ts2win = ts2[i:(i + windowsize - 1)];
         
         ans = crqa(ts1win, ts2win, delay, embed, rescale,
-            radius, normalize, mindiagline, minvertline, tw,
-            whiteline)
+                   radius, normalize, mindiagline, minvertline,
+                   tw, whiteline, recpt, side, method, metric,
+                   datatype)
         
         RP = ans$RP
         if (length(RP) == 1) RP = vector() ## a trick for cases
                                            ## with empty recurrence plot
-        ans = as.numeric( unlist(ans[1:9]) )
+        ans = as.numeric( unlist(ans[1:10]) )
         ## if trend needs to be calculated do it here
 
         if (trend == TRUE){
@@ -75,10 +79,15 @@ wincrqa <- function(ts1, ts2, windowstep, windowsize, delay, embed,
             TREND = c(TREND, NA)
         }
         
+        
         crawin = rbind(crawin, c(ans, tsp), deparse.level = 0)
         
     }
  
+    ## name the measures
+    colnames(crawin) = c("RR", "DET", "NRLINE", "maxL", "L", 
+                         "ENTR", "rENTR", "LAM", "TT", "catH", "TREND")
+    
     return(list(crqwin = crawin, TREND = TREND))
     
 }

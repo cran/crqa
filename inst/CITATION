@@ -1,0 +1,23 @@
+bibentry(bibtype = "Misc",
+  title        = "Unidimensional and Multidimensional Methods for Recurrence Quantification Analysis with {crqa}",
+  author       = c(person(given  = c("Moreno", "I."),
+                          family = "Coco",
+                          email  = "moreno.cocoi@gmail.com"),
+                   person(given  = "Dan",
+                          family = "Monster",
+                  			  email  = "danm@econ.au.dk"),
+                   person(given  = "Giuseppe",
+                          family = "Leonardi",
+                          email  = "g.leonardi@vizja.pl"),
+                   person(given  = "Rick",
+                          family = "Dale",
+                          email  = "rdale@ucla.edu"),
+                   person(given  = "Sebastian",
+                          family = "Wallot",
+                          email  = "sebastian.wallot@ae.mpg.de")),
+  year          = "2020",
+  eprint        = "2006.01954",
+  archivePrefix = "arXiv", 
+  primaryClass  = "physics.data-an"
+)
+

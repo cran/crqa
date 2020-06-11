@@ -1,28 +1,51 @@
 Package: crqa
 Type: Package
-Title: Cross-Recurrence Quantification Analysis for Categorical and
+Title: Recurrence Quantification Analysis for Categorical and
         Continuous Time-Series
-Version: 1.0.9
-Date: 2018-10-12
-Author: Moreno I. Coco and Rick Dale with contributions of James D. Dixon and John Nash
+Version: 2.0
+Date: 2020-05-28
+Authors@R: c(
+    person("Moreno  I.", "Coco", role = c("cre","aut"), 
+    email="moreno.cocoi@gmail.com"),
+    person("Dan"," Monster", role = "aut", 
+    email = "danm@econ.au.dk"),
+    person("Giuseppe","Leonardi", role = "aut", 
+    email = "g.leonardi@vizja.pl"), 
+    person("Rick"," Dale", role = "aut", 
+    email = "rdale@ucla.edu"), 
+    person("Sebastian","Wallot", role = "aut", 
+    email = "sebastian.wallot@ae.mpg.de"), 
+    person("James D.","Dixon", role = "ctb", 
+    email = "james.dixon@uconn.edu"), 
+    person("John  C.","Nash", role = "ctb",
+    email = "nashjc@uottawa.ca")
+    )
 Maintainer: Moreno I. Coco <moreno.cocoi@gmail.com>
 Description: 
-    Cross-recurrence quantification analysis 
-    of two time-series, of either categorical or
-    continuous values. It provides different methods
-    for profiling cross-recurrence, i.e., only looking
-    at the diagonal recurrent points, as well as more
+    Auto, Cross and Multi-dimensional recurrence quantification analysis. 
+    Different methods for computing recurrence, cross vs. multidimensional
+    or profile iti.e., only looking at the diagonal recurrent points, 
+    as well as functions for optimization and plotting are proposed.
     in-depth measures of the whole cross-recurrence plot,
-    e.g., recurrence rate. Please refer to by Coco and Dale (2014) 
-    <doi:10.3389/fpsyg.2014.00510> for further details about the method.
-Depends: R (>= 3.0.0), Matrix, tseriesChaos, fields, plot3D, pracma
+    Please refer to by Coco and Dale (2014) <doi:10.3389/fpsyg.2014.00510> 
+    and Wallot (2018) <doi:10.1080/00273171.2018.1512846>
+    for further details about the method.
+Depends: R (>= 3.0.0)
+Imports: Matrix, pracma, tseriesChaos, gplots, plot3D, rdist
 License: GPL (>= 2)
-Collate: 'ami.R' 'CTcrqa.R' 'calcphi.R' 'checkts.R' 'crqa.R'
-        'drpdfromts.R' 'lorenzattractor.R' 'optimizeParam.R' 'plotRP.R'
-        'runcrqa.R' 'simts.R' 'spdiags.R' 'takephi.R' 'theiler.R'
-        'tt.R' 'wincrqa.R' 'windowdrp.R'
-RoxygenNote: 6.0.1
+Collate: 'crqa.R' 'crqa_helpers.R' 'drpfromts.R' 'lorenzattractor.R'
+        'mdDelay.R' 'mdFnn.R' 'optimizeParam.R' 'piecewiseRQA.R'
+        'plotRP.R' 'simts.R' 'spdiags.R' 'wincrqa.R' 'windowdrp.R'
+RoxygenNote: 7.1.0
+LazyData: true
 NeedsCompilation: yes
-Packaged: 2018-10-12 14:54:07 UTC; moreno
+Packaged: 2020-06-05 10:08:43 UTC; nak_d
+Author: Moreno I. Coco [cre, aut],
+  Dan Monster [aut],
+  Giuseppe Leonardi [aut],
+  Rick Dale [aut],
+  Sebastian Wallot [aut],
+  James D. Dixon [ctb],
+  John C. Nash [ctb]
 Repository: CRAN
-Date/Publication: 2018-10-12 15:40:03 UTC
+Date/Publication: 2020-06-11 19:10:02 UTC

@@ -1,27 +1,24 @@
 useDynLib(crqa, .registration = TRUE)
 
-export(CTcrqa,
-    calcphi,
-    checkts,
-    crqa,
-    drpdfromts,
-    lorenzattractor,
-    optimizeParam,
-    runcrqa,
-    plotRP,
-    simts,
-    spdiags,
-    theiler,
-    tt,
-    wincrqa,
-    windowdrp)
+export(crqa,
+       drpfromts,
+       lorenzattractor,
+       mdDelay, 
+       mdFnn,
+       optimizeParam,
+       piecewiseRQA,
+       plotRP,
+       simts,
+       spdiags,
+       wincrqa,
+       windowdrp)
 
-import(tseriesChaos,
-       fields,
-       plot3D,
-       pracma)
-
-importFrom("graphics", mtext, plot, points)
+importFrom("graphics", mtext, hist, matpoints, plot, points)
+importFrom("gplots", hist2d)
 importFrom("Matrix", diag, t, Matrix, sparseMatrix)
-importFrom("stats", sd, median, rnorm, runif)  
+importFrom("plot3D", scatter3D)
+importFrom("pracma", circshift, eps, pdist2, polyfit)
+importFrom("stats", sd, median, rnorm, runif, var)  
+importFrom("rdist", cdist)
+importFrom("tseriesChaos", mutual, false.nearest)
 importFrom("utils", tail)

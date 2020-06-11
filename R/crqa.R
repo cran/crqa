@@ -1,23 +1,23 @@
-## written in R by Moreno I. Coco, 2013, (moreno.cocoi@gmail.com)
-## crqa, adapted from a Matlab code developed at
+## originally written in R by Moreno I. Coco, 2013, (moreno.cocoi@gmail.com)
+## crqa, inspired and adapted from a Matlab code developed at
 ## summer school of: Nonlinear Methods for Psychological Science
 ## organized by the University of Cincinnati, 2012
-
-## next time i check change sd(matrix) with sapply(matrix, sd)
+## most important update by Moreno I. Coco, 02/2019 using R code 
+## by Sebastian Wallot (mdcrqa) v1.0, 13. April 2018
 
 ## arguments to pass to crqa:
+
 ## ts1, ts2: times series of integers indicating the states
 ## delay = nr. of lags
 ## embed = the embedding dimension, i.e., the lag intervals
-## rescale = the normalization for the distance; 
-##           if 1 (Mean Distance); if 2 (Max Distance)
+## rescale = rescale the distance matrix before looking at the radius; 
+##           if 1 (Mean Distance); if 2 (Max Distance), if 3 (Min Distance), if 4 (Euc Distance)
 ## radius =  distance to accept two points as recurrent (set it very 
 ##           small, if the series are categorical in nature)
-## normalize = rescale factor for source data; 
+## normalize = rescale the input variables for source data; 
 ##           if 1 (Unit interval); if 2 (z-score) 
 ## mindiagline = set a minimum diagonal line length
 ## mindiagline = set a minimum vertical line length
-
 ##  whiteline = FALSE # - flag to compute or not white vertical lines
 ##                    in the recurrence plot. Note, white lines are not
 ##                    yet used to derive any particular measure
@@ -28,78 +28,118 @@
 ## side = a string indicating whether the recurrence measures
 ## should be calculated in the "upper" triangle of the matrix
 ## "lower" triangle of the matrix, on the "whole" matrix
+## method = a string vector indicating the type of recurrence analysis
+##          options are: "rqa", "crqa" and "mdcrqa".
+## metric = the distance measure to apply, 
+##          default euclidean but see help(cdist) for more options
 
-## checkl = a list with four arguments:
-##       $do = TRUE|FALSE; normalize (or not) the length of ts
-## if $do = TRUE, then the arguments of checkts() needs to be passed.
-##    $datatype = (numerical, categorical) - nature of ts
-##    $thrshd: number of timepoints we accept two ts to be different
-##    $pad: whether the two series have to be padded (TRUE) or chopped
+## datatype = (continuous, categorical) - nature of input data
+##          default is continuous
 
 ## try below
+## examples of categorical data 
+## -- vectors
+## ts1 = c("cat", "friend", "frenzy", "dog", "mum", "door")
+## ts2 = c("miss", "shop", "dog", "mum", "incomprensible", "friend")
+## matrices
+## ts1 = cbind(c("cat", "friend", "frenzy", "dog", "mum", "door"),
+##            c("miss", "shop", "dog", "mum", "incomprensible", "friend"))
 
-# ts1 = c(0,0,1,1,0,0)
-# ts2 = c(2,2,1,1,2,2)
+## ts2 = cbind(c("friend", "frenzy", "dog", "mum", "door", "man"),
+##            c("miss", "shop", "dog", "friend", "idea", "love"))
+
+## examples of continuous data 
+## -- vectors
 # ts1 = c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1)
-# ts2 = c(1,1, 2, 2, 0, 0, 1, 2)
-# delay = 1; embed = 1; rescale = 1; radius = 0.001;
-# normalize = 0; mindiagline = 2; minvertline = 2;
-# tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-# checkl = list(do = TRUE, thrshd = 3, datatype = "categorical",
-#               pad = TRUE)
+# ts2 = c(1, 1, 2, 2, 0, 0, 1, 2, 2, 2)
+## -- matrices
+# ts1 = cbind(c(0, 0, 1, 1, 0, 0, 2, 2, 1, 1),
+#       c(0, 0, 2, 1, 0, 1, 1, 2, 2, 1))
+# ts2 = cbind(c(1, 1, 2, 2, 0, 0, 1, 2, 2, 1),
+# c(2, 2, 2, 2, 1, 1, 1, 2, 2, 1, 0, 0))
 
-# crqa(ts2, ts1, delay, embed, rescale, radius, normalize, mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
+## starting parameters
+## delay = 1; embed = 1; rescale = 1; radius = 0.001;
+## normalize = 0; mindiagline = 2; minvertline = 2;
+## tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
+## method = 'mdcrqa'; metric = 'euclidean';  datatype = "continuous"
+
+# crqa(ts2, ts1, delay, embed, rescale, radius, normalize, 
+# mindiagline, minvertline, tw, whiteline, recpt, side, method, 
+# metric, datatype)
+
+# require(rdist) ## to choose the distance matrix choosing a specific metric
+# require(Matrix) ## to manipulate sparse matrices 
 
 .packageName <- 'crqa'
 
-crqa <- function(ts1, ts2, delay, embed, rescale,
-                 radius, normalize, mindiagline, minvertline,
-                 tw = 0, whiteline = F, recpt = F, side = "both",
-                 checkl = list(do = F)){
+crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
+                 radius = 0.001, normalize = 0, mindiagline = 2, minvertline = 2,
+                 tw = 0, whiteline = FALSE, recpt = FALSE, side = "both", 
+                 method = "rqa", metric = "euclidean", datatype = "continuous"){
   
-  ## passing a few default above
-  # if( missing(tw) ){ tw = 0} -> not working
-  
-  v11 = v21 = NULL ## stupid initializations to please CRAN
-  
-  # require("fields")  ## to compute the Euclidean distance matrix
-  # require("Matrix")  ## to manipulate sparse matrices 
-  
-  
+  ## first, need to check that the input variables whether all parameters have value
+  # check input variables
   ## check if the input is a recurrence plot 
   if (recpt == FALSE){
+    
+  # first check whether input variables exist
+  if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
+  if (exists("ts2")) ts2 = ts2 else stop("No data has been specified for ts2")
+  
+  if (method == "rqa" | method == "crqa"){ ## data for rqa and crqa should be inputted as vector 
+    if (is.matrix(ts1)) stop("Your data must consist of a single column of data.")  
+    if (is.matrix(ts2)) stop("Your data must consist of a single column of data.")      
     
     ts1 = as.vector(as.matrix(ts1)) ## make sure data is a vector
     ts2 = as.vector(as.matrix(ts2))
     
-    if (is.matrix(ts1)){ stop("Your data must consist of a single column of data.")}  
-    if (is.matrix(ts2)){ stop("Your data must consist of a single column of data.")}      
-    
-    
-    ## check the length of the sequences and decide if they have
-    ## to be normalized to the same length.
-    
-    if (checkl$do == TRUE){
-      
-      tsnorm = checkts(ts2, ts1, checkl$datatype,
-                       checkl$thrshd, checkl$pad)
-      
-      if (tsnorm[[2]] == FALSE){
-        stop("Time-series difference longer than threshold. Increase threshold, or set checkl$do = FALSE avoiding normalization of ts")
-      } else {
-        ts1 = tsnorm[[1]][,1]
-        ts2 = tsnorm[[1]][,2]
-      }
-      
+    ## make sure the data is in a continuous format
+    if (is.character(ts1) | is.factor(ts1) | is.character(ts1) | is.factor(ts1)){ 
+      warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
+      tsnorm = numerify(ts1, ts2)
+      ts1 = tsnorm$nwts1
+      ts2 = tsnorm$nwts2
     }
     
+    ## make sure they have the same length otherwise refer user
+    if(length(ts1) != length(ts2)) stop("The input vectors have different length")
     ## check that the length of the series is not shorter than the phase embed*delay
-    
     if (length(ts1) < embed*delay){ stop("Phase-space (embed*delay) longer than ts1")}  
     if (length(ts2) < embed*delay){ stop("Phase-space (embed*delay) longer than ts2")}      
-    
-    ##rescale the data if really necessary
-    
+  }
+  
+  if (method == "mdcrqa"){
+    if (nrow(ts1) != nrow(ts2)) stop("ts1 and ts2 do not have the same number rows") 
+    if (ncol(ts1) != ncol(ts2)) stop("ts1 and ts2 do not have the same number columns") 
+    if (nrow(ts1) < (embed-1)*delay) stop("Insufficient number of data points to embedd time-series")
+    ## make sure the data is in a continuous format
+    if (is.character(ts1) | is.factor(ts1) | is.character(ts2) | is.factor(ts2)){ 
+      warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
+      
+      tsnorm = numerify(ts1, ts2)
+      ts1 = tsnorm$nwts1
+      ts2 = tsnorm$nwts2
+    }
+  }
+  
+  ## provide default values to all parameters if missing (R needs each exists to be in a single)
+  if(exists("embed"))         embed = embed else embed = 1
+  if(exists("delay"))         delay = delay else delay = 1
+  if(exists("rescale"))       rescale = rescale else rescale = 0
+  if(exists("normalize"))     normalize = normalize else normalize = 0
+  if(exists("radius"))        radius = radius else radius = 1
+  if(exists("mindiagline") & mindiagline > 2) mindiagline = mindiagline else mindiagline <- 2
+  if(exists("minvertline") & minvertline > 2) minvertline = minvertline else minvertline <- 2
+  if(exists("tw"))           tw = tw else tw = 0
+  if(exists("whiteline"))    whiteline = whiteline else whiteline = F
+  if(exists("recpt"))        recpt    = recpt      else recpt = F
+  if(exists("side"))         side     = side       else side = "both"
+  if(exists("method"))       method   = method     else method = "crqa"
+  if(exists("metric"))       metric   = metric     else metric = "euclidean"
+  if(exists("datatype"))     datatype = datatype   else datatype = "continuous"
+  
+    ##rescale the input data if necessary
     if (normalize > 0){
       switch (normalize,
               {1
@@ -117,59 +157,46 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
       )
     }
     
-    ## start to compute recurrence
-    ## do it twice for the two series
+    ## check whether input data needs to be embedded 
+    ## and need different procedures whether the data is vector (rqa/crqa) 
+    ## or a matrix (mdcrqa)
     
-    for (loop in 1:embed){
-      vectorstart = (loop-1) * delay + 1;
-      vectorend = length(ts1) - ( (embed-loop)* delay);
-      assign(paste("v1", loop, sep =""), ts1[vectorstart:vectorend]);
-    }
-    
-    for (loop in 1:embed){
-      vectorstart = (loop-1) * delay + 1;
-      vectorend = length(ts2) - ( (embed-loop)* delay);
-      assign(paste("v2", loop, sep =""), ts2[vectorstart:vectorend]);
-    }
-    
-    ## Create matrix from vectors to use for distance matrix calcs
-    
-    dimts1 = dimts2 = vector() ## initialize dims of embedding 
-    
-    for (loop in 1:embed){
-      if (loop == 1){ dimts1 = v11 }
-      else{
-        eval(
-          parse(
-            text = paste("dimts1 = cbind(dimts1,",
-                         paste( "v1", loop, sep = ""),
-                         ", deparse.level = 0)", sep = "")
-          )
-        )
+    if (embed > 1) {
+      if (method == 'rqa' | method == 'crqa'){
+        newLength <- length(ts1) - (embed-1)*delay
+        tempTs1 <- ts1[1:newLength]
+        for (i in seq(2,embed)) {
+          tempTs1 <- cbind(tempTs1, ts1[(1+(delay*(i-1))):(newLength+delay*(i-1))])
+        }
+        ts1 <- tempTs1
+        rm(tempTs1)
+        tempTs2 <- ts2[1:newLength]
+        for (i in seq(2,embed)) {
+          tempTs2 <- cbind(tempTs2, ts2[(1+(delay*(i-1))):(newLength+delay*(i-1))])
+        }
+        ts2 <- tempTs2
+        rm(tempTs2)
+      }
+      
+      if (method == 'mdcrqa'){
+        newLength <- dim(ts1)[1] - (embed-1)*delay
+        tempTs1 <- ts1[1:newLength,]
+        for (i in seq(2,embed)) {
+          tempTs1 <- cbind(tempTs1,ts1[(1+(delay*(i-1))):(newLength+delay*(i-1)),])
+        }
+        ts1 <- tempTs1
+        rm(tempTs1)
+        tempTs2 <- ts2[1:newLength,]
+        for (i in seq(2,embed)) {
+          tempTs2 <- cbind(tempTs2,ts2[(1+(delay*(i-1))):(newLength+delay*(i-1)),])
+        }
+        ts2 <- tempTs2
+        rm(tempTs2)
       }
     }
-    
-    for (loop in 1:embed){
-      if (loop == 1){ dimts2 = v21 }
-      else{
-        eval(
-          parse(
-            text = paste("dimts2 = cbind(dimts2,",
-                         paste( "v2", loop, sep = ""),
-                         ", deparse.level = 0)", sep = "")
-          )
-        )
-      }
-    }
-    
-    
-    ## Compute euclidean distance matrix
-    v1l = length(v11)
-    v2l = length(v21)
-    
     
     ## just to have the length of matrix saved
-    dm = rdist(dimts1,dimts2);
+    dm <- as.matrix(cdist(ts1, ts2, metric = metric))
     
     ## Find indeces of the distance matrix that fall
     ## within prescribed radius.
@@ -178,23 +205,33 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
              {1  ## Create a distance matrix that is re-scaled
                ## to the mean distance
                
-               rescaledist = mean(dm, na.rm = T)    
-               dmrescale=(dm/rescaledist)*100},
+               rescaledist = mean(dm)    
+               dmrescale   = dm/rescaledist},
              
              {2  ## Create a distance matrix that is re-scaled
                ## to the max distance
                
-               rescaledist = max(dm, na.rm = T);
-               dmrescale = (dm/rescaledist)*100}
+               rescaledist = max(dm);
+               dmrescale   = dm/rescaledist},
+             {3 ## Create a distance matrix that is rescaled 
+               ## to the min distance
+               rescaledist = min(dm);
+               dmrescale   = dm/rescaledist},
+             
+             { 4 ## Create a distance matrix that is rescaled 
+               ## to the euclidean distance
+               dmrescale <- dm/abs(sum(dm)/(nrow(dm)^2-nrow(dm)))}
       )
     } else { dmrescale = dm }
     ## Compute recurrence matrix
+    
+    v1l = nrow(dmrescale); v2l = ncol(dmrescale) ## save the dimension of the matrix
     
     ind = which(dmrescale <= radius, arr.ind = TRUE);
     r = ind[,1]; c = ind[,2]
     
   } else { ## take as input an RP directly
-    
+    if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
     ## as usual R needs fiddly code to make sure about identify of data
     ts1 = matrix(as.logical(ts1), ncol = ncol(ts1))
     v1l = nrow(ts1); v2l = ncol(ts1)        
@@ -322,23 +359,35 @@ crqa <- function(ts1, ts2, delay, embed, rescale,
       restt = tt(S, minvertline, whiteline)            
       lam = restt$lam; TT = restt$TT
       
+      ## let's calculate categorical entropy
+      if (side == 'both' & datatype == 'categorical'
+          & delay == 1 & embed == 1 & radius < .1){ 
+        ## we need a full RP and data has to be categorical
+        ## we need to input directly the indeces of the 
+        ## recurrence plot and the size of the matrix
+        size   = dim(S)
+        catH   = catEnt(ind, size)
+      } else {
+        catH = NA
+      }
+      
     } else {
       
       numdiaglines = 0; maxline = 0; pdeter = NA;
       entropy = NA; relEntropy = NA; meanline = 0
-      lam = 0; TT = 0; RP = NA
+      lam = 0; TT = 0; catH = NA; RP = NA; 
     }
     
     results = list(RR = percentrecurs, DET = pdeter, 
                    NRLINE = numdiaglines, maxL = maxline, 
                    L = meanline, ENTR = entropy, 
                    rENTR = relEntropy,
-                   LAM = lam, TT = TT, RP = S)
+                   LAM = lam, TT = TT, catH = catH, RP = S)
     
   } else { # print (paste ("No recurrence found") )
     results = list(RR = 0, DET = NA, NRLINE = 0,
                    maxL = 0, L = 0, ENTR = NA, rENTR = NA,
-                   LAM = NA, TT = NA, RP = NA)}  
+                   LAM = NA, TT = NA, catH = NA, RP = NA)}  
   
   return (results)
   

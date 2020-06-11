@@ -3,31 +3,34 @@
 
 # compute diagonal recurrence profile for two
 # categorical time series, t1 t2 (x / y)
-# the ws is the total nr. of lags over which the series are evaluated
+# the windowsize is the total nr. of lags over which the series are evaluated
 
 # modified as of crqa.1.0.7, now we use the crqa function and directly
 # extract from it the diagonal means. This change was implemented to obtain 
 # diagonal profiles from delayed and embedded continuous time-series
 
-# the drpdfromts assumes as default categorical variables, 
+# the drpfromts assumes as default categorical variables, 
 # no-delay, no-embed, and radius < 0.001
 
 .packageName <- 'crqa'
 
-drpdfromts <- function(ts1, ts2, ws, datatype, 
+drpfromts <- function(ts1, ts2, windowsize,  
                        radius = 0.001, delay = 1, embed = 1, rescale = 0,
                        normalize = 0, mindiagline = 2, minvertline = 2,
-                       tw = 0){
+                       tw = 0, whiteline = F, recpt = F, side = 'both', 
+                       method = 'crqa', metric = 'euclidean', 
+                       datatype = 'categorical'){
   
+
   if (datatype == "categorical"){ 
     ## convert the data into numeric
     ts1     = as.character( as.matrix( ts1 ) )
     ts2     = as.character( as.matrix( ts2 ) )
     
     ## apply convenient function to transform the levels of the categorical variables into numerics
-    checked = checkts(ts1, ts2, datatype, thrshd = length(ts1), pad = FALSE)
-    ts1     = checked[[1]][, 1]
-    ts2     = checked[[1]][, 2]
+    tsnorm = numerify(ts1, ts2)
+    ts1 = tsnorm$nwts1
+    ts2 = tsnorm$nwts2
     
   }
   
@@ -38,19 +41,19 @@ drpdfromts <- function(ts1, ts2, ws, datatype,
     
   }
   
-  ## run full blown crqa
-  res = crqa(ts2, ts1, delay, embed, rescale, radius, 
-             normalize, mindiagline, minvertline, tw)
+  res = crqa(ts1, ts2, delay, embed, rescale, radius, normalize, 
+       mindiagline, minvertline, tw, whiteline, recpt, side, 
+       method, metric, datatype)
 
-  ## extract the RP
   RP = res$RP
+  
   if (class(RP) != "logical"){ # we have some point that recur
     len      = nrow(RP)-1 # the nrow of the RP
     lags     = -len:len   # the diagonal of the RP
     
     RP      = matrix(as.numeric(RP), nrow = nrow(RP), ncol = ncol(RP))
     RP_form = unlist(lapply(split(RP, row(RP) - col(RP)), mean, na.rm = TRUE))
-    wn      = which(lags >= -ws &  lags <= ws)
+    wn      = which(lags >= -windowsize &  lags <= windowsize)
     
     drpd    = RP_form[wn]
   } else {

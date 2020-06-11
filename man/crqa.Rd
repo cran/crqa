@@ -1,32 +1,37 @@
 \name{crqa}
 \alias{crqa}
-\title{Cross recurrence measures of two time-series,
-  time-delayed and embedded in higher dimensional space
+\title{Auto, cross and multidimensional recurrence measures 
+of one, two or multiple time-series, time-delayed and embedded 
+in higher dimensional space
 }
-\description{Core cross recurrence function, which examines
-  recurrent structures between time-series, which are
+\description{Core recurrence function, which examines
+  recurrent structures of a single (rqa), two (crqa), 
+  or multidimensional time-series (mdcrqa), which are
   time-delayed and embedded in higher dimensional space.
-  The approach compares the phase space trajectories of two
-  time-series in the same phase-space when delays are
-  introduced. A distance matrix between the two-series,
+  The approach compares the phase space trajectories of 
+  the time-series in the same phase-space when delays are
+  introduced. A distance matrix between the time-series,
   delayed and embedded is calculated. Several measures
-  representative of the interaction between two series are
-  extracted (explained below).}
+  representative of the underlying dynamics of the system
+  are extracted (explained below).}
 \usage{
 crqa(ts1, ts2, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
+mindiagline, minvertline, tw, whiteline, recpt, side, method,
+metric, datatype)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{ts1}{First time-series.}
-  \item{ts2}{Second time-series.}
+  \item{ts1}{First time-series dataset.}
+  \item{ts2}{Second time-series dataset}
   \item{delay}{The delay unit by which the series are lagged.}
   \item{embed}{The number of embedding dimension for
     phase-reconstruction, i.e., the lag intervals.}
   \item{rescale}{Rescale the distance matrix;
     if rescale = 0 (do nothing);
     if rescale = 1 (mean distance of entire matrix);
-    if rescale = 2 (maximum distance of entire matrix).}
+    if rescale = 2 (maximum distance of entire matrix).
+    if rescale = 3 (minimum distance of entire matrix).
+    if rescale = 4 (euclidean distance of entire matrix).}
   \item{radius}{A threshold, cut-off, constant used to
       decide whether two points are recurrent or not.}
   \item{normalize}{Normalize the time-series;
@@ -48,26 +53,29 @@ mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
     should be calculated in the 'upper' triangle of the RP
     'lower' triangle of the matrix, or 'both'.
     LOC is automatically excluded for 'upper' and 'lower'.}
-  \item{checkl}{A list with four arguments:
-      do = TRUE|FALSE; normalize (or not) the length of ts
-      if do == TRUE, then the arguments of checkts() needs to be passed.
-      datatype = (numerical, categorical) - nature of ts
-      thrshd: number of timepoints we tollerate difference between ts
-      pad: the two series have to be padded (TRUE) or chopped (FALSE)}	
+  \item{method}{A string to indicate the type of recurrence
+  analysis to peform. There are three options:
+  rqa (autorecurrence); crqa(cross-recurrence); 
+  mdcrqa(multidimensional recurrence). Default value is crqa}
+  \item{metric}{A string to indicate the type of 
+  distance metric used, default is euclidean but 
+  see help rdist() to list all other possible metrics.} 
+\item{datatype}{a string (continuous or categorical) 
+  to indicate whether the nature of the data type}	
 }
 
 \details{
   We recommend setting whiteline = FALSE, as the current
   version of the library does not make use of such
-  information to extract measures of cross-recurrence.
+  information to extract recurrence measures.
 }
 
 \value{
-  If CRQA can be calculated and recurrence is found, it returns
-  a list with different measures extracted from the recurrence
-  plot. Otherwise, the values for the output arguments will be
+  If a recurrence plot (RP) can be calculated and hence 
+  recurrence observed the function will returna a list with 
+  different measures extracted. 
+  Otherwise, the values for the output arguments will be
   either 0 or NA.
-  
   \item{RR}{The percentage of recurrent points falling within
     the specified radius (range between 0 and 100)}
   \item{DET}{Proportion of recurrent points forming diagonal
@@ -84,42 +92,46 @@ mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
   \item{LAM}{Proportion of recurrent points forming vertical
     line structures}
   \item{TT}{The average length of vertical line structures}
+  \item{catH}{Entropy of categorical recurrence plots based on rectangular block structures}
   \item{RP}{The Recurrence Plot sparse matrix data}
 }
 
+\references{
+Coco, M. I., and Dale, R. (2014). Cross-recurrence quantification analysis of categorical and continuous time series: an R package. Frontiers in psychology, 5, 510.
+
+Wallot, S. (2018). Multidimensional Cross-Recurrence Quantification Analysis (MdCRQA) a method for quantifying correlation between multivariate time-series. Multivariate behavioral research, 1-19}
+
 \author{Moreno I. Coco (moreno.cocoi@gmail.com)}
 
-\note{Part of this code was translated from a Matlab
+\note{Original bits of this code were translated from a Matlab
   version provided by Rick Dale, and created during 
   the Non-Linear Methods for Psychological Science
   summer school held at the University of Cincinnati
-  in 2012}
+  in 2012. The multi-dimensional method for the crqa function 
+  has been written together with Sebastian Wallot 
+  (sebastian.wallot at aesthetics.mpg.de )}
 
-\seealso{ \code{\link{tt}}, \code{\link{checkts}},
-  \code{\link{spdiags}}, \code{\link{simts}}}
+\seealso{\code{\link{spdiags}}, \code{\link{simts}}}
 
 \examples{
 
-## simulate two dichotomous series
-tS = simts(0.25, 0.05, 0.2, 0.2, 0.25, 100)
-ts1 = tS[1,]; ts2 = tS[2,]
+# use the available data
+data(crqa) 
 
-## check data(crqa) for alternative data
-## (e.g., RDts1, RDts2)
+listener = eyemovement$listener
+narrator = eyemovement$narrator
 
-## initialize the parameters
-
-delay = 1; embed = 1; rescale = 1; radius = 0.001;
+delay = 1; embed = 1; rescale = 0; radius = .1;
 normalize = 0; mindiagline = 2; minvertline = 2;
 tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-checkl = list(do = FALSE, thrshd = 3, datatype = "categorical",
-    pad = TRUE)
+method = 'crqa'; metric = 'euclidean';  
+datatype = "categorical"
 
-ans = crqa(ts2, ts1, delay, embed, rescale, radius, normalize,
-mindiagline, minvertline, tw, whiteline, recpt, side, checkl)
+ans = crqa(narrator, listener, delay, embed, rescale, radius, normalize, 
+           mindiagline, minvertline, tw, whiteline, recpt, side, method,
+           metric, datatype)
 
-print(ans[1:9]) ## last argument of list is the cross-recurrence plot
-RP = ans$RP ## take out RP
+print(ans[1:10]) ## last argument of list is the recurrence plot
 
 }
 
