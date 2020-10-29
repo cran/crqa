@@ -1,5 +1,11 @@
 # crqa (cross-recurrence quantification analysis)
 
+# crqa 2.0.1
+
+* Fixed bug on wincrqa() and windowdrp() to run windowed RQA on multidimensional data.
+    * Simplified output of wincrqa() now returning a dataframe
+    * Included new import from FSA() package to use diags() function. 
+
 # crqa 2.0.0
 
 # Major features

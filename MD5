@@ -1,6 +1,6 @@
-ec2a83b1eebbedfdebf9da4effbe22f0 *DESCRIPTION
-d0d6994e20de47c258cdcf708a0580a5 *NAMESPACE
-4dc3363a73f751b1d7ca6d2539d96ea7 *NEWS.md
+1c92fcecf292a403b571e0b62a3465ef *DESCRIPTION
+bb7766780645c44eb3565570eaeabd85 *NAMESPACE
+12e02f965e6c03518a24d3cf972321d9 *NEWS.md
 781e6090f124daea60ffb1449f28141f *R/crqa.R
 6ea85a41a9ed85025c3e483bfeac54a7 *R/crqa_helpers.R
 56ee6cba73bb998b71a33a9fb546b59e *R/drpfromts.R
@@ -12,8 +12,8 @@ faf8b3d44e48b184df0d04c818408c88 *R/piecewiseRQA.R
 4739592ef7aee15b860cb90637f82933 *R/plotRP.R
 0264d4c328a7a32ec30714b4a3e16dc8 *R/simts.R
 ef263b24aca130d3cc80288cd67e1fd4 *R/spdiags.R
-9842641ec92253e357501920bee5e434 *R/wincrqa.R
-a1d4f52b660adbb23a400861464029b2 *R/windowdrp.R
+440bc17fa3d14b68ced4735b28055c2c *R/wincrqa.R
+f298f8fdd2470c8a13528955450ae39b *R/windowdrp.R
 3196caadb8b7015eeec83c4f45f3ce99 *README.md
 849715e38ed85547eed537e789296fcb *data/crqa.RData
 52c8527b184b3da3bf66cc70cf42fd42 *inst/CITATION
@@ -31,7 +31,7 @@ dd8ae8f8e4393e3cf1b499c40acbdb24 *man/lorenzattractor.Rd
 a02045e8733e9ba46c6d094654cfdb68 *man/simts.Rd
 47cbd9f5cd8e35b18bbaf1039e858951 *man/spdiags.Rd
 210cd9a2a47c02b84284c2ff5eff6a55 *man/text.Rd
-9b010573eca496fe4ba2d225034ba298 *man/wincrqa.Rd
+46fae6c9032ad871e47b1da1abcb3dad *man/wincrqa.Rd
 024d3cfd55e7f8487bd631edb8fc3c7e *man/windowdrp.Rd
 e855afb600b4fcd14f84d1e7a6834d16 *src/init.c
 a9de526d2dd2130a3b2c4eae51b6c365 *src/jspd.f

@@ -120,8 +120,7 @@ ans = wincrqa(listener, narrator, windowstep, windowsize, delay, embed,
                     datatype, trend)
 
 ## other recurrence measures are available in ans
-winres  = as.data.frame(ans$crqwin)
-profile = as.numeric(winres$RR) 
+profile = as.numeric(ans$RR) 
 
 plot(profile, type = 'l')
 
