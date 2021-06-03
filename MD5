@@ -1,4 +1,4 @@
-1c92fcecf292a403b571e0b62a3465ef *DESCRIPTION
+19e60a0dab7f4b6408b9ec671ff68e02 *DESCRIPTION
 bb7766780645c44eb3565570eaeabd85 *NAMESPACE
 12e02f965e6c03518a24d3cf972321d9 *NEWS.md
 781e6090f124daea60ffb1449f28141f *R/crqa.R
@@ -15,8 +15,16 @@ ef263b24aca130d3cc80288cd67e1fd4 *R/spdiags.R
 440bc17fa3d14b68ced4735b28055c2c *R/wincrqa.R
 f298f8fdd2470c8a13528955450ae39b *R/windowdrp.R
 3196caadb8b7015eeec83c4f45f3ce99 *README.md
-849715e38ed85547eed537e789296fcb *data/crqa.RData
+316b82a99e02b2dba931d87471d815bd *build/vignette.rds
+420c65a29e5acfc7099c53325c92ac23 *data/crqa.RData
 52c8527b184b3da3bf66cc70cf42fd42 *inst/CITATION
+d109e4746b13f45ad7fd92566fb89429 *inst/doc/crqa_tutorial_Rjournal.R
+f541117c75dc38daa1a1cb89e6c4417c *inst/doc/crqa_tutorial_Rjournal.Rmd
+983cb3246ddde9d077c3e81b5b28270c *inst/doc/crqa_tutorial_Rjournal.html
+6c3bddf636629dc62a2147f19fcebb6d *man/Figure_1.Rd
+c71e5d6077226b238da9296afc0d7287 *man/Figure_2.Rd
+42ba61f68c2edad698bddb8e53fdf456 *man/Figure_3.Rd
+5787c938aeb5d64c974c2e5e0eedd421 *man/Figure_6.Rd
 9e9585681fb5ca467ed622efdf61d209 *man/crqa-package.Rd
 813c703e40c51884c7ad6034331d1f6a *man/crqa.Rd
 3f628bad649eab76074350b2e27083f9 *man/drpfromts.Rd
@@ -35,3 +43,4 @@ a02045e8733e9ba46c6d094654cfdb68 *man/simts.Rd
 024d3cfd55e7f8487bd631edb8fc3c7e *man/windowdrp.Rd
 e855afb600b4fcd14f84d1e7a6834d16 *src/init.c
 a9de526d2dd2130a3b2c4eae51b6c365 *src/jspd.f
+f541117c75dc38daa1a1cb89e6c4417c *vignettes/crqa_tutorial_Rjournal.Rmd
