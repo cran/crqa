@@ -1,5 +1,9 @@
 # crqa (cross-recurrence quantification analysis)
 
+# crqa 2.0.3
+
+* Fixed minor bug on drpfromts() when method was `mdcrqa`. The argument `datatype` was forcing the input data to be in vector form, and should instead be left as a matrix. Added if statement to check (line 25)
+
 # crqa 2.0.1
 
 * Fixed bug on wincrqa() and windowdrp() to run windowed RQA on multidimensional data.

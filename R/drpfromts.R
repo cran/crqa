@@ -15,36 +15,39 @@
 .packageName <- 'crqa'
 
 drpfromts <- function(ts1, ts2, windowsize,  
-                       radius = 0.001, delay = 1, embed = 1, rescale = 0,
-                       normalize = 0, mindiagline = 2, minvertline = 2,
-                       tw = 0, whiteline = F, recpt = F, side = 'both', 
-                       method = 'crqa', metric = 'euclidean', 
-                       datatype = 'categorical'){
+                      radius = 0.001, delay = 1, embed = 1, rescale = 0,
+                      normalize = 0, mindiagline = 2, minvertline = 2,
+                      tw = 0, whiteline = F, recpt = F, side = 'both', 
+                      method = 'crqa', metric = 'euclidean', 
+                      datatype = 'categorical'){
   
-
-  if (datatype == "categorical"){ 
-    ## convert the data into numeric
-    ts1     = as.character( as.matrix( ts1 ) )
-    ts2     = as.character( as.matrix( ts2 ) )
-    
-    ## apply convenient function to transform the levels of the categorical variables into numerics
-    tsnorm = numerify(ts1, ts2)
-    ts1 = tsnorm$nwts1
-    ts2 = tsnorm$nwts2
-    
-  }
   
-  if (datatype == "continuous"){
-    ## just double check that the data is numeric
-    ts1 = as.numeric( as.matrix( ts1 ) )
-    ts2 = as.numeric( as.matrix( ts2 ) )
+  if(method != "mdcrqa"){ ## in case the method is multi-dimensional do not perform checks on vectors
     
+    if (datatype == "categorical"){ 
+      ## convert the data into numeric
+      ts1     = as.character( as.matrix( ts1 ) )
+      ts2     = as.character( as.matrix( ts2 ) )
+      
+      ## apply convenient function to transform the levels of the categorical variables into numerics
+      tsnorm = numerify(ts1, ts2)
+      ts1 = tsnorm$nwts1
+      ts2 = tsnorm$nwts2
+      
+    }
+    
+    if (datatype == "continuous"){
+      ## just double check that the data is numeric
+      ts1 = as.numeric( as.matrix( ts1 ) )
+      ts2 = as.numeric( as.matrix( ts2 ) )
+      
+    }
   }
   
   res = crqa(ts1, ts2, delay, embed, rescale, radius, normalize, 
-       mindiagline, minvertline, tw, whiteline, recpt, side, 
-       method, metric, datatype)
-
+             mindiagline, minvertline, tw, whiteline, recpt, side, 
+             method, metric, datatype)
+  
   RP = res$RP
   
   if (class(RP) != "logical"){ # we have some point that recur

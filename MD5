@@ -1,9 +1,9 @@
-19e60a0dab7f4b6408b9ec671ff68e02 *DESCRIPTION
+4f972553ea538b96a91a8c21c7b81cdc *DESCRIPTION
 bb7766780645c44eb3565570eaeabd85 *NAMESPACE
-12e02f965e6c03518a24d3cf972321d9 *NEWS.md
+660f306e921a7e4a368522bb0d686e4e *NEWS.md
 781e6090f124daea60ffb1449f28141f *R/crqa.R
 6ea85a41a9ed85025c3e483bfeac54a7 *R/crqa_helpers.R
-56ee6cba73bb998b71a33a9fb546b59e *R/drpfromts.R
+2e9e8d8f62d7170f882dcd600a1a516b *R/drpfromts.R
 30c90837f3d2ea2c8b30f65e70dbe15c *R/lorenzattractor.R
 53572d9f97b9948e75f09d428b7f5f5f *R/mdDelay.R
 d13e1f0b01a9b8cd214a18a92f8dc151 *R/mdFnn.R
@@ -20,7 +20,7 @@ f298f8fdd2470c8a13528955450ae39b *R/windowdrp.R
 52c8527b184b3da3bf66cc70cf42fd42 *inst/CITATION
 d109e4746b13f45ad7fd92566fb89429 *inst/doc/crqa_tutorial_Rjournal.R
 f541117c75dc38daa1a1cb89e6c4417c *inst/doc/crqa_tutorial_Rjournal.Rmd
-983cb3246ddde9d077c3e81b5b28270c *inst/doc/crqa_tutorial_Rjournal.html
+b7f66a65ceb07c8b0611524cff90949d *inst/doc/crqa_tutorial_Rjournal.html
 6c3bddf636629dc62a2147f19fcebb6d *man/Figure_1.Rd
 c71e5d6077226b238da9296afc0d7287 *man/Figure_2.Rd
 42ba61f68c2edad698bddb8e53fdf456 *man/Figure_3.Rd
