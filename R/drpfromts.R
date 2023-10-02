@@ -50,7 +50,7 @@ drpfromts <- function(ts1, ts2, windowsize,
   
   RP = res$RP
   
-  if (class(RP) != "logical"){ # we have some point that recur
+  if (is.logical(RP) !=  T){ # we have some point that recur
     len      = nrow(RP)-1 # the nrow of the RP
     lags     = -len:len   # the diagonal of the RP
     

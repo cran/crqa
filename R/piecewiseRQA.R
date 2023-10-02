@@ -166,7 +166,7 @@ piecewiseRQA <- function(ts1, ts2, blockSize, delay = 1, embed = 1, rescale = 0,
     
     RP = piecewiseRP
     
-    if (class(RP) != "logical"){ # we have some point that recur
+    if (is.logical(RP) != T){ # we have some point that recur
       len      = nrow(RP)-1 # the nrow of the RP
       lags     = -len:len   # the diagonal of the RP
       

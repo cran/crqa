@@ -13,9 +13,9 @@ export(crqa,
        wincrqa,
        windowdrp)
 
+importFrom("grDevices", dev.off, recordPlot)
 importFrom("graphics", mtext, hist, matpoints, plot, points)
 importFrom("gplots", hist2d)
-importFrom("FSA", diags)
 importFrom("Matrix", diag, t, Matrix, sparseMatrix)
 importFrom("plot3D", scatter3D)
 importFrom("pracma", circshift, eps, pdist2, polyfit)

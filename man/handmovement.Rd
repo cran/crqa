@@ -6,7 +6,7 @@
 
 \description{	
 
-Hand-movement velocity profiles of two participants (P1 and P2) for the dominant (\_d) and non-dominant (\_n) hand. 
+Hand-movement velocity profiles of two participants (P1 and P2) for the dominant (d) and non-dominant (n) hand. 
 
 }
 

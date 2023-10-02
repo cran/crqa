@@ -1,4 +1,4 @@
-bibentry(bibtype = "Misc",
+bibentry(bibtype = "Article",
   title        = "Unidimensional and Multidimensional Methods for Recurrence Quantification Analysis with {crqa}",
   author       = c(person(given  = c("Moreno", "I."),
                           family = "Coco",
@@ -15,9 +15,9 @@ bibentry(bibtype = "Misc",
                    person(given  = "Sebastian",
                           family = "Wallot",
                           email  = "sebastian.wallot@ae.mpg.de")),
-  year          = "2020",
-  eprint        = "2006.01954",
-  archivePrefix = "arXiv", 
-  primaryClass  = "physics.data-an"
+  year          = "2021",
+  doi           = "10.32614/RJ-2021-062",
+  journal       = "R Journal",
+  volume        = "13",
+  number        = "1"
 )
-
