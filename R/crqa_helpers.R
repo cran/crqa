@@ -7,7 +7,7 @@
 ami <- function(ts1, ts2, lag){
   
   lag = round(lag);   ## make sure that lags are integers
-
+  
   ts1 = as.vector(ts1)
   ts2 = as.vector(ts2)
   
@@ -17,7 +17,7 @@ ami <- function(ts1, ts2, lag){
     stop('ami() ts1 and ts2 should have the same length');
   }
   
-  ts1 = ts1-min(ts1)   
+  ts1 = ts1-min(ts1)
   ts1 = ts1*(1-eps(1))/max(ts1)
   
   ts2 = ts2-min(ts2)
@@ -48,8 +48,8 @@ ami <- function(ts1, ts2, lag){
     for (jj in 1:(n-abslag)){
       kk = jj + abslag
       
-      if (lag[ii] < 0) { 
-        temp = jj; jj = kk; kk = temp; ## swap 
+      if (lag[ii] < 0) {
+        temp = jj; jj = kk; kk = temp; ## swap
       }
       
       PtS[bints1[kk], bints2[jj]] = PtS[bints1[kk],bints2[jj]] + 1;
@@ -61,7 +61,7 @@ ami <- function(ts1, ts2, lag){
     Pts1 = rowSums(PtS)
     Pts2 = colSums(PtS)
     
-    q = PtS/ outer(Pts1,Pts2);    
+    q = PtS/ outer(Pts1,Pts2);
     q = PtS * log2(q);
     
     v[ii] = sum(q)/log2(bins);
@@ -75,14 +75,14 @@ ami <- function(ts1, ts2, lag){
 # ===============================================================
 # autoMI
 
-# used in function mdDelay() to compute the average mutual information 
+# used in function mdDelay() to compute the average mutual information
 # ===============================================================
 # Matlab creator: Sebastian Wallot, Max Planck Insitute for Empirical Aesthetics
 #     Dan Moenster, Aarhus University
 # R translation by: by Moreno I. Coco (moreno.cocoi@gmail.com)
 
 autoMI = function(x, nbins, maxlag){
- 
+  
   ami = vector('numeric', length = maxlag+1);
   
   # Compute a histogram of x
@@ -118,7 +118,7 @@ autoMI = function(x, nbins, maxlag){
     # row_sum = sum(p_ij, 2);
     # If any rows sum to zero, replace the sum by 1
     # row_sum(row_sum == 0) = 1;
-    # Divide each element with the row sum. 
+    # Divide each element with the row sum.
     # p_ij = diag(1 ./ row_sum) * p_ij;
     # Compute the auto mutual information by summing over all
     # combinations of i and j
@@ -135,11 +135,11 @@ autoMI = function(x, nbins, maxlag){
 }
 
 # =============================================================================
-# catEnt = compute categorical entropy 
-# Standalone function we can use on the already extracted RP 
+# catEnt = compute categorical entropy
+# Standalone function we can use on the already extracted RP
 # (a Sparse Matrix) in order to compute categorical entropy
-# using the findBlocks() function. 
-# 
+# using the findBlocks() function.
+#
 # creator: Giuseppe Leonardi (giuleonardi@gmail.com)
 # integrated and modified by Moreno I. Coco (moreno.cocoi@gmail.com)
 # =============================================================================
@@ -153,7 +153,7 @@ catEnt <- function(ind_c, size){
   
   nbk   <- length(unique(points$x))
   areas <- as.numeric(table(points[points$x%in%1:nbk, 3]))
-
+  
   bkarea <- areas[areas > 1]
   if (length(bkarea) > 0) {
     tabarea <- as.data.frame(table(bkarea))
@@ -192,10 +192,10 @@ catEnt <- function(ind_c, size){
 # str(tmp)
 
 diags_extract <- function(x, which = 0,incl.labels = c("none","row","column"),
-                  val.name = "value",label.name = "label") {
+                          val.name = "value",label.name = "label") {
   ## check if matrix
   if (!is.matrix(x)) stop("'diags_extract' only works with matrices.")
-
+  
   if (nrow(x)==1 | ncol(x)==1) stop("'x' must have more than 1 row and more than 1 column.")
   ## find indices of diagonals for the matrix
   ## idea from http://stackoverflow.com/a/27935808/1123933
@@ -237,42 +237,51 @@ diags_extract <- function(x, which = 0,incl.labels = c("none","row","column"),
 # findBlocks
 # Matrix transformation by @alexis_laz (Stackexchange)
 # Assign to non-zero elements of a sparse Matrix
-# (i.e. categorical recurrence plot) a numerical code identifying 
+# (i.e. categorical recurrence plot) a numerical code identifying
 # its block membership
 # ===============================================================
 # creator: Giuseppe Leonardi (giuleonardi@gmail.com)
-# integrated and modified by Moreno I. Coco (moreno.cocoi@gmail.com)
+# integrated and modified by Moreno I. Coco (moreno.cocoi@gmail.com) & Alexandra Paxton (alexandra.paxton@uconn.edu)
 
 
 findBlocks <- function(ind_c, size) {
   
-  lt    = nrow(ind_c) ## the number of datapoints
+  # get the total number of possible points in the RP
+  lt    = nrow(ind_c)
   
-  ind_c = as.list(as.data.frame(ind_c)) ## working with lists that consume less memory
-  # print(dim(ind_c))
-  blocks = list(lastSeenRow = integer(size[1]), 
+  # convert the index matrix to a list
+  ind_c = as.list(as.data.frame(ind_c))
+  
+  # keep track of when
+  blocks = list(lastSeenRow = integer(size[1]),
                 lastSeenCol = integer(size[2]),
-                gr = integer(lt))      
-
-  # k = 1
-  # i = 1
+                gr = integer(lt))
+  
+  # initialize block counter
   ngr = 0 # initialize the counter of blocks
   
+  # cycle through each possible point
   for(k in 1:lt) {
-    kr <- ind_c$row[k] 
+    
+    # find the next point in the matrix
+    kr <- ind_c$row[k]
     kc <- ind_c$col[k]
-    # print(c(k, kr, kc))
+    #print(c(k, kr, kc))
     i <- blocks$lastSeenRow[kr]
     j <- blocks$lastSeenCol[kc]
     
-    if (i && (abs(kc - ind_c$col[i]) == 1))      blocks$gr[k] = blocks$gr[i]
-    else if (j && (abs(kr - ind_c$row[j]) == 1)) blocks$gr[k] = blocks$gr[j]  
-    else { 
-      ngr <- ngr + 1L; blocks$gr[k] = ngr 
+    # identify which points actually exist and are contiguous
+    if (!is.na(i) && i > 0 && (abs(kc - ind_c$col[i]) == 1))      {
+      blocks$gr[k] = blocks$gr[i]
+    } else if ((!is.na(j)) && j > 0 && ((abs(kr - ind_c$row[j]) == 1))) {
+      blocks$gr[k] = blocks$gr[j]
+    } else {
+      ngr <- ngr + 1L;
+      blocks$gr[k] = ngr
     }
     
     blocks$lastSeenRow[kr] <- k
-    blocks$lastSeenCol[kc] <- k        
+    blocks$lastSeenCol[kc] <- k
   }
   
   return(data.frame(i = ind_c$row, j = ind_c$col, x = blocks$gr))
@@ -284,8 +293,8 @@ findBlocks <- function(ind_c, size) {
 # ===============================================================
 # findFirstBelowThreshold
 
-# used in function mdFnn() to find the first element below the threshold. 
-# Then test whether an element below the threshold was found, 
+# used in function mdFnn() to find the first element below the threshold.
+# Then test whether an element below the threshold was found,
 # and recover if this is not the case.
 # ===============================================================
 # Matlab creator: Sebastian Wallot, Max Planck Insitute for Empirical Aesthetics
@@ -298,7 +307,7 @@ findFirstBelowThreshold = function(ami, threshold){
   idx = which(ami < threshold)[1];
   
   if (length(idx) == 0){
-    print('mdDelay() - findFirstBelowThreshold() No value below threshold found. 
+    print('mdDelay() - findFirstBelowThreshold() No value below threshold found.
           Will use local minimum instead');
     
     # If there is more than one elemtent that has the minimum value
@@ -310,8 +319,8 @@ findFirstBelowThreshold = function(ami, threshold){
     #  subtracted from the index to get the lag.
     # MIC: note sure this make sense, at least not in R, as lag = 1 is effectively not lagging anything
     
-    lag = idx  
-  
+    lag = idx
+    
   }
   
   return(lag)
@@ -353,7 +362,7 @@ findFirstLocalMinimum = function(ami){
 # numerify
 
 ## transform categorical series into numerical series
-## arguments: two character vectors (or matrices)  
+## arguments: two character vectors (or matrices)
 ## it returns the vectors (or matrices) converted into continuos variable
 ## creator: Moreno I. Coco (moreno.cocoi@gmail.com)
 
@@ -380,9 +389,9 @@ numerify <- function( ts1, ts2 ){
 }
 
 # ===============================================================
-# theiler 
+# theiler
 
-##  used in function crqa() to define a theiler window 
+##  used in function crqa() to define a theiler window
 ## across the diagonal of the recurrence plot to remove recurrent points along the diagonal of the matrix
 ## written by Moreno I. Coco (moreno.cocoi@gmail.com)
 ## S = a sparse recurrent matrix
@@ -394,7 +403,7 @@ numerify <- function( ts1, ts2 ){
 
 theiler <- function(S,tw) {
   
-  if (tw > nrow(S)) stop ("crqa(); tw() Theiler window larger 
+  if (tw > nrow(S)) stop ("crqa(); tw() Theiler window larger
                           than number of diagonals")
   
   if (tw > 0){ ## remove the theilers' points
@@ -461,11 +470,11 @@ tt <- function(x, minvertline, whiteline){
   ## measure the length of black lines
   ## do some padding on the series
   
-  if (z0[1] > z1[1]){ 
+  if (z0[1] > z1[1]){
     z0 = c(0, z0)  # add one zero on the top = z0(1:end); z0(1,1) = 0
   }
   
-  if (length(z0) > length(z1)){ 
+  if (length(z0) > length(z1)){
     z0 = z0[-length(z0)] #(end)=[];
   }
   
@@ -482,7 +491,7 @@ tt <- function(x, minvertline, whiteline){
   ## including those below the vertline threshold.
   mnvert = which(t1 < minvertline)
   
-  if (length(mnvert) != 0){ ## there are vertical lines smaller than minimum    
+  if (length(mnvert) != 0){ ## there are vertical lines smaller than minimum
     t1tr = t1[-mnvert]
   } else {
     t1tr = t1
@@ -522,7 +531,7 @@ tt <- function(x, minvertline, whiteline){
     ## put the indeces in a matrix
     matind = rbind(matind, rep(0,ncol(matind))) ## add one column for padding
     reprw = which(diff(matind)[,1] != 0) ## get the length of column
-    unind = matind[reprw, ] 
+    unind = matind[reprw, ]
     
     
     for (rp in 1:length(reprw) ){
@@ -534,13 +543,13 @@ tt <- function(x, minvertline, whiteline){
         
       } else {
         
-        xw[1:unind[rp,1], colind[reprw[rp -1]:reprw[rp] ] ] =  1            
+        xw[1:unind[rp,1], colind[reprw[rp -1]:reprw[rp] ] ] =  1
         xw[unind[rp,2]:nrow(xw), colind[reprw[rp -1]:reprw[rp] ] ] = 1
         
       }
     }
     
-    xw = rbind(xw, rep(1, ncol(xw)), deparse.level = 0)    
+    xw = rbind(xw, rep(1, ncol(xw)), deparse.level = 0)
     
     zw = diff(as.vector(xw)) ;
     
@@ -551,25 +560,23 @@ tt <- function(x, minvertline, whiteline){
     ## measure the length of white lines
     if (z0w[1] > z1w[1]){
       z0w = z0w[-1]
-      if (length(z1w) > length(z0w) ){ 
+      if (length(z1w) > length(z0w) ){
         z1w = z1w[-length(z1w)]
       }
     }
     
     
-    if ( length(z1w) > length(z0w) ){ 
+    if ( length(z1w) > length(z0w) ){
       z0w = c(1,z0w)
     }
     
     tw = sort(z1w-z0w)
     t1w = tw[which(tw-1 > 0)]
     
-    tw = tw     
+    tw = tw
     
   } else {  tw = NA }
   
   return(list (TT = TT, lam = lam, tw = tw, tb = t) )
   
 }
-
-

@@ -14,7 +14,7 @@ export(crqa,
        windowdrp)
 
 importFrom("grDevices", dev.off, recordPlot)
-importFrom("graphics", mtext, hist, matpoints, plot, points)
+importFrom("graphics", mtext, hist, matpoints, par, plot, points)
 importFrom("gplots", hist2d)
 importFrom("Matrix", diag, t, Matrix, sparseMatrix)
 importFrom("plot3D", scatter3D)

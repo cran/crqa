@@ -2,8 +2,8 @@ Package: crqa
 Type: Package
 Title: Unidimensional and Multidimensional Methods for Recurrence
         Quantification Analysis
-Version: 2.0.4
-Date: 2023-09-23
+Version: 2.0.5
+Date: 2023-11-06
 Authors@R: c(
     person("Moreno  I.", "Coco", role = c("cre","aut"), 
     email="moreno.cocoi@gmail.com"),
@@ -45,7 +45,7 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 Suggests: knitr, rmarkdown
 NeedsCompilation: yes
-Packaged: 2023-10-02 10:12:23 UTC; moreno
+Packaged: 2023-11-11 14:21:39 UTC; nak_d
 Author: Moreno I. Coco [cre, aut],
   Dan Monster [aut],
   Giuseppe Leonardi [aut],
@@ -55,4 +55,4 @@ Author: Moreno I. Coco [cre, aut],
   John C. Nash [ctb],
   Alexandra Paxton [ctb]
 Repository: CRAN
-Date/Publication: 2023-10-02 14:40:02 UTC
+Date/Publication: 2023-11-27 12:10:02 UTC

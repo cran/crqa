@@ -2,7 +2,6 @@
 ##
 ## Arguments:
 ##     RP          : the RP ngCMatrix output from crqa() function
-##     par         : a list of parameters for the plotting, including:
 ##       unit      : numeric ; gap between sample labeling on axes.
 ##                   Note: only relevant if `show_ticks = TRUE`.
 ##                   (default: 10)
@@ -29,35 +28,15 @@
 
 .packageName <- 'crqa'
 
-plotRP <- function(RP, par){
-  
-  ## default values for plotting
-  # initialize variable to go around global visible binding
-  # specify the space of possible parameters
-  
-  labelx = "Time"; labely = "Time"; labelmain = "Recurrence Plot"; cols = "black" 
-  pcex = .3; pch = .3; unit = 10; show_ticks = FALSE 
-  
-  default_par = data.frame(labelx, labely, labelmain, cols,
-                  pcex, pch, unit, show_ticks)
-  
-  # if no user-defined parameters exist, use defaults
-  if (exists("par") == FALSE){
-    for (default_v in 1:length(default_par)){ 
-      assign(names(default_par)[default_v], default_par[[default_v]])
-    }
-  } else {
-    
-    # define user-defined variables
-    for (v in 1:length(par)){ assign(names(par)[v], par[[v]]) }
-    
-    # find which labels have not been user-defined and use defaults
-    undefined_par = names(default_par)[!names(default_par) %in% names(par)]
-    use_defaults = default_par[undefined_par]
-    for (default_v in 1:length(use_defaults)){
-      assign(names(use_defaults)[default_v], use_defaults[[default_v]])
-      }
-  }
+plotRP <- function(RP,
+                   labelx = "Time", 
+                   labely = "Time", 
+                   labelmain = "Recurrence Plot", 
+                   cols = "black",
+                   pcex = .3, 
+                   pch = .3, 
+                   unit = 10, 
+                   show_ticks = FALSE){
   
   # find the size of the RP
   xdim   = nrow(RP)
@@ -75,6 +54,7 @@ plotRP <- function(RP, par){
   # create the shell of the plot
   par(mar = c(3.8, 3.8, 2,2), font.axis = 2, cex.axis = 1,
       font.lab = 2, cex.lab = 1.2)
+  
   plot(tstamp, tstamp, type = "n", 
        xlab = "", ylab = "", main=labelmain,
        xaxt = "n", yaxt = "n",

@@ -83,7 +83,8 @@ recpt, side, method, metric, datatype, trend)
 
 }
 
-\author{Moreno I. Coco (moreno.cocoi@gmail.com) }
+\author{Moreno I. Coco (moreno.cocoi@gmail.com)
+Alexandra Paxton \email{alexandra.paxton@uconn.edu}}
 
 \note{If no-recurrence is found in a window,
   that window will not be saved, and a message
@@ -91,9 +92,13 @@ recpt, side, method, metric, datatype, trend)
   TREND is implemented following a solution proposed
   by Norbert Marwan, and translated here in R,
   for those who have asked him.
-  He, however warns that this measure might strongly depend
+  He, however, warns that this measure might strongly depend
   on the chosen settings to calculate crq.
-  Relying on such measure can, therefore, produce misleading results.
+  Relying blindly on such measure can, therefore, produce misleading results.
+  Also, we enabled the possibility to input directly a RP with recpt = T, 
+  and so extract the measures. This implies that it will not be the same 
+  as by conducting phase-space reconstruction on subsets of the time series.  
+  So, please, make sure why you are doing it and why.
   }
 
 

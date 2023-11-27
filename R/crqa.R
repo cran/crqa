@@ -78,67 +78,71 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
                  tw = 0, whiteline = FALSE, recpt = FALSE, side = "both", 
                  method = "rqa", metric = "euclidean", datatype = "continuous"){
   
+  # print(data.frame(delay, embed, radius, rescale, 
+  #                 normalize, mindiagline, minvertline, tw, whiteline, 
+  #                 recpt, side, method, metric, datatype))
+  
   ## first, need to check that the input variables whether all parameters have value
   # check input variables
   ## check if the input is a recurrence plot 
   if (recpt == FALSE){
     
-  # first check whether input variables exist
-  if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
-  if (exists("ts2")) ts2 = ts2 else stop("No data has been specified for ts2")
-  
-  if (method == "rqa" | method == "crqa"){ ## data for rqa and crqa should be inputted as vector 
-    if (is.matrix(ts1)) stop("Your data must consist of a single column of data.")  
-    if (is.matrix(ts2)) stop("Your data must consist of a single column of data.")      
+    # first check whether input variables exist
+    if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
+    if (exists("ts2")) ts2 = ts2 else stop("No data has been specified for ts2")
     
-    ts1 = as.vector(as.matrix(ts1)) ## make sure data is a vector
-    ts2 = as.vector(as.matrix(ts2))
-    
-    ## make sure the data is in a continuous format
-    if (is.character(ts1) | is.factor(ts1) | is.character(ts1) | is.factor(ts1)){ 
-      warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
-      tsnorm = numerify(ts1, ts2)
-      ts1 = tsnorm$nwts1
-      ts2 = tsnorm$nwts2
-    }
-    
-    ## make sure they have the same length otherwise refer user
-    if(length(ts1) != length(ts2)) stop("The input vectors have different length")
-    ## check that the length of the series is not shorter than the phase embed*delay
-    if (length(ts1) < embed*delay){ stop("Phase-space (embed*delay) longer than ts1")}  
-    if (length(ts2) < embed*delay){ stop("Phase-space (embed*delay) longer than ts2")}      
-  }
-  
-  if (method == "mdcrqa"){
-    if (nrow(ts1) != nrow(ts2)) stop("ts1 and ts2 do not have the same number rows") 
-    if (ncol(ts1) != ncol(ts2)) stop("ts1 and ts2 do not have the same number columns") 
-    if (nrow(ts1) < (embed-1)*delay) stop("Insufficient number of data points to embedd time-series")
-    ## make sure the data is in a continuous format
-    if (is.character(ts1) | is.factor(ts1) | is.character(ts2) | is.factor(ts2)){ 
-      warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
+    if (method == "rqa" | method == "crqa"){ ## data for rqa and crqa should be inputted as vector 
+      if (is.matrix(ts1)) stop("Your data must consist of a single column of data.")  
+      if (is.matrix(ts2)) stop("Your data must consist of a single column of data.")      
       
-      tsnorm = numerify(ts1, ts2)
-      ts1 = tsnorm$nwts1
-      ts2 = tsnorm$nwts2
+      ts1 = as.vector(as.matrix(ts1)) ## make sure data is a vector
+      ts2 = as.vector(as.matrix(ts2))
+      
+      ## make sure the data is in a continuous format
+      if (is.character(ts1) | is.factor(ts1) | is.character(ts1) | is.factor(ts1)){ 
+        warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
+        tsnorm = numerify(ts1, ts2)
+        ts1 = tsnorm$nwts1
+        ts2 = tsnorm$nwts2
+      }
+      
+      ## make sure they have the same length otherwise refer user
+      if(length(ts1) != length(ts2)) stop("The input vectors have different length")
+      ## check that the length of the series is not shorter than the phase embed*delay
+      if (length(ts1) < embed*delay){ stop("Phase-space (embed*delay) longer than ts1")}  
+      if (length(ts2) < embed*delay){ stop("Phase-space (embed*delay) longer than ts2")}      
     }
-  }
-  
-  ## provide default values to all parameters if missing (R needs each exists to be in a single)
-  if(exists("embed"))         embed = embed else embed = 1
-  if(exists("delay"))         delay = delay else delay = 1
-  if(exists("rescale"))       rescale = rescale else rescale = 0
-  if(exists("normalize"))     normalize = normalize else normalize = 0
-  if(exists("radius"))        radius = radius else radius = 1
-  if(exists("mindiagline") & mindiagline > 2) mindiagline = mindiagline else mindiagline <- 2
-  if(exists("minvertline") & minvertline > 2) minvertline = minvertline else minvertline <- 2
-  if(exists("tw"))           tw = tw else tw = 0
-  if(exists("whiteline"))    whiteline = whiteline else whiteline = F
-  if(exists("recpt"))        recpt    = recpt      else recpt = F
-  if(exists("side"))         side     = side       else side = "both"
-  if(exists("method"))       method   = method     else method = "crqa"
-  if(exists("metric"))       metric   = metric     else metric = "euclidean"
-  if(exists("datatype"))     datatype = datatype   else datatype = "continuous"
-  
+    
+    if (method == "mdcrqa"){
+      if (nrow(ts1) != nrow(ts2)) stop("ts1 and ts2 do not have the same number rows") 
+      if (ncol(ts1) != ncol(ts2)) stop("ts1 and ts2 do not have the same number columns") 
+      if (nrow(ts1) < (embed-1)*delay) stop("Insufficient number of data points to embedd time-series")
+      ## make sure the data is in a continuous format
+      if (is.character(ts1) | is.factor(ts1) | is.character(ts2) | is.factor(ts2)){ 
+        warning("Your input data was provided either as character or factor, and recoded as numerical identifiers")  
+        
+        tsnorm = numerify(ts1, ts2)
+        ts1 = tsnorm$nwts1
+        ts2 = tsnorm$nwts2
+      }
+    }
+    
+    ## provide default values to all parameters if missing (R needs each exists to be in a single)
+    if(exists("embed"))         embed = embed else embed = 1
+    if(exists("delay"))         delay = delay else delay = 1
+    if(exists("rescale"))       rescale = rescale else rescale = 0
+    if(exists("normalize"))     normalize = normalize else normalize = 0
+    if(exists("radius"))        radius = radius else radius = 1
+    if(exists("mindiagline") & mindiagline > 2) mindiagline = mindiagline else mindiagline <- 2
+    if(exists("minvertline") & minvertline > 2) minvertline = minvertline else minvertline <- 2
+    if(exists("tw"))           tw = tw else tw = 0
+    if(exists("whiteline"))    whiteline = whiteline else whiteline = F
+    if(exists("recpt"))        recpt    = recpt      else recpt = F
+    if(exists("side"))         side     = side       else side = "both"
+    if(exists("method"))       method   = method     else method = "crqa"
+    if(exists("metric"))       metric   = metric     else metric = "euclidean"
+    if(exists("datatype"))     datatype = datatype   else datatype = "continuous"
+    
     ##rescale the input data if necessary
     if (normalize > 0){
       switch (normalize,
@@ -360,8 +364,7 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
       lam = restt$lam; TT = restt$TT
       
       ## let's calculate categorical entropy
-      if (side == 'both' & datatype == 'categorical'
-          & delay == 1 & embed == 1 & radius < .1){ 
+      if (side == 'both' & datatype == 'categorical' & radius <= .1){ 
         ## we need a full RP and data has to be categorical
         ## we need to input directly the indeces of the 
         ## recurrence plot and the size of the matrix
