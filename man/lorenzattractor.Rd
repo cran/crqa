@@ -14,7 +14,7 @@
 }
 
 \usage{
-lorenzattractor(numsteps, dt, sigma, r, b, plots)
+lorenzattractor(numsteps, dt, sigma, r, b)
 }
 
 \arguments{
@@ -24,8 +24,6 @@ lorenzattractor(numsteps, dt, sigma, r, b, plots)
   \item{sigma}{System parameter}
   \item{r}{System parameter}
   \item{b}{System parameter}
-  \item{plots}{If TRUE, it plots the Lorenz obtained}
-  
 }
 
 
@@ -48,9 +46,8 @@ lorenzattractor(numsteps, dt, sigma, r, b, plots)
 
 ## initialize the parameters
 numsteps = 2 ^ 11; dt = .01; sigma = 10; r = 28; b = 8/3;
-plots = TRUE
 
-res = lorenzattractor(numsteps, dt, sigma, r, b, plots)
+res = lorenzattractor(numsteps, dt, sigma, r, b)
 
 }
 

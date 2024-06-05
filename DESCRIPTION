@@ -2,12 +2,12 @@ Package: crqa
 Type: Package
 Title: Unidimensional and Multidimensional Methods for Recurrence
         Quantification Analysis
-Version: 2.0.5
-Date: 2023-11-06
+Version: 2.0.6
+Date: 2024-06-03
 Authors@R: c(
     person("Moreno  I.", "Coco", role = c("cre","aut"), 
     email="moreno.cocoi@gmail.com"),
-    person("Dan"," Monster", role = "aut", 
+    person("Dan"," Mønster", role = "aut", 
     email = "danm@econ.au.dk"),
     person("Giuseppe","Leonardi", role = "aut", 
     email = "g.leonardi@vizja.pl"), 
@@ -34,20 +34,20 @@ Description:
     and Wallot (2018) <doi: 10.1080/00273171.2018.1512846>
     for further details about the method.
 Depends: R (>= 3.5.0)
-Imports: Matrix, pracma, tseriesChaos, gplots, plot3D, rdist
-License: GPL (>= 2)
+Imports: Matrix, pracma, rdist, tseriesChaos, gplots, dplyr, ggplot2
+License: GPL (>= 3)
 Collate: 'crqa.R' 'crqa_helpers.R' 'drpfromts.R' 'lorenzattractor.R'
         'mdDelay.R' 'mdFnn.R' 'optimizeParam.R' 'piecewiseRQA.R'
-        'plotRP.R' 'simts.R' 'spdiags.R' 'wincrqa.R' 'windowdrp.R'
-RoxygenNote: 7.2.3
+        'plot_rp.R' 'simts.R' 'spdiags.R' 'wincrqa.R' 'windowdrp.R'
+RoxygenNote: 7.3.1
 LazyData: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 Suggests: knitr, rmarkdown
 NeedsCompilation: yes
-Packaged: 2023-11-11 14:21:39 UTC; nak_d
+Packaged: 2024-06-05 09:31:43 UTC; moreno
 Author: Moreno I. Coco [cre, aut],
-  Dan Monster [aut],
+  Dan Mønster [aut],
   Giuseppe Leonardi [aut],
   Rick Dale [aut],
   Sebastian Wallot [aut],
@@ -55,4 +55,4 @@ Author: Moreno I. Coco [cre, aut],
   John C. Nash [ctb],
   Alexandra Paxton [ctb]
 Repository: CRAN
-Date/Publication: 2023-11-27 12:10:02 UTC
+Date/Publication: 2024-06-05 16:10:08 UTC

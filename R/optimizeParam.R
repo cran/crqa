@@ -129,7 +129,7 @@ optimizeParam <- function(ts1, ts2, par, min.rec = 2, max.rec = 5){
     ## rt	 escape factor = leave it default
     ## eps	 neighborhood diameter = leave default
     
-    embdts1 = false.nearest(ts1, m = 20, d = 1, t = 0, rt = 10,
+    embdts1 = false.nearest(ts1, m = maxEmb, d = del, t = 0, rt = 10,
                             eps = sd(ts1)/10)
     
     ## get a percentage of reduction of false neighbours
@@ -156,7 +156,7 @@ optimizeParam <- function(ts1, ts2, par, min.rec = 2, max.rec = 5){
     ## at the moment the method is commented.
     # embmints1 = as.numeric( which(fnnfraction1 == min(fnnfraction1)))
     
-    embdts2 = false.nearest(ts2, m = 20, d = 1, t = 0, rt=10,
+    embdts2 = false.nearest(ts2, m = maxEmb, d = del, t = 0, rt=10,
                             eps=sd(ts2)/10)
     
     fnnfraction2 = embdts2[1,]

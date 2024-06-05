@@ -2,15 +2,11 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
-
 /* .Fortran calls */
-extern void F77_NAME(jspd)(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void F77_SUB(jspd)(int *m, int *n, int *k, double *Adata, int *jb, double *Bdata, int *d, double *tv, int *na, int *nb, int *nd);
 
 static const R_FortranMethodDef FortranEntries[] = {
-    {"jspd", (DL_FUNC) &F77_NAME(jspd), 11},
+    {"jspd", (DL_FUNC) &F77_SUB(jspd), 11},
     {NULL, NULL, 0}
 };
 

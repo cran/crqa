@@ -7,7 +7,7 @@ export(crqa,
        mdFnn,
        optimizeParam,
        piecewiseRQA,
-       plotRP,
+       plot_rp,
        simts,
        spdiags,
        wincrqa,
@@ -17,9 +17,10 @@ importFrom("grDevices", dev.off, recordPlot)
 importFrom("graphics", mtext, hist, matpoints, par, plot, points)
 importFrom("gplots", hist2d)
 importFrom("Matrix", diag, t, Matrix, sparseMatrix)
-importFrom("plot3D", scatter3D)
 importFrom("pracma", circshift, eps, pdist2, polyfit)
 importFrom("stats", sd, median, rnorm, runif, var)  
 importFrom("rdist", cdist)
 importFrom("tseriesChaos", mutual, false.nearest)
 importFrom("utils", tail)
+importFrom("dplyr", filter, mutate)
+import("ggplot2")

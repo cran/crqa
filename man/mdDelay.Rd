@@ -50,8 +50,6 @@ handset = handmovement[1:300, ] ## take less points
 
 mdDelay(handset, nbins, maxlag, criterion, threshold)
 
-
-
 }
 
 \keyword{ts}

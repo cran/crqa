@@ -12,18 +12,21 @@
 #    tau = time delay for embedding.
 #
 #   Optional arguments:
-#    maxEmb  = maximum number of embedding dimensions that are considered.
-#    Default = 10.
+#    maxEmb = maximum number of embedding dimensions that are considered.
+#     Default is 10.
+#
+#    doPlot = plot false nearest neighbors if 1, supress plot if 0.
+#     Default is 1.
 #
 #    noSamples = number of randomly drawn coordinates from phase-space used
-#     to estimate the percentage of false-nearest neighbors.
-#     Default = 500.
+#     to estimate the percentage of false-nearest neighors.
+#     eflaut is 500.
 #
 #    Rtol = First distance criterion for separating false neighbors.
-#     Default = 10.
+#     Default is 10.
 #
 #    Atol = Second distance criterion for separating false neighbors.
-#     Default = 2.
+#     Default is 2.
 #
 #   Outputs:
 #    fnnPerc = percentage of false neighbors for each embedding.
@@ -47,14 +50,10 @@
 #     (under review)
 
 # recoded in R by Moreno I. Coco (moreno.cocoi@gmail.com), 25/02/2019
-# tau = 1; maxEmb = 10; numSamples = 500; Rtol = 10; Atol = 2
 
 mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol = 2){
   
   ## check the data type and possible errors in it
-  ## class() in R 4.0 may return more than a single answer
-  ## we just consider the first one as valid
-  
   tdata = class(data)[1]
   
   if (tdata == "data.frame"){data = as.matrix(data)} ## convert data.frames into matrices
@@ -71,13 +70,14 @@ mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol =
   
   # Now do the actual work to find FNN
   #
+  maxEmb = maxEmb+1
   
   if (is.vector(data) == TRUE){ dims = 1; N = length(data) # get dimensionality of time series
   } else {
     dims = ncol(data); N = nrow(data) 
   }
   
-  fnnPerc = 100       # first FNN
+  fnnPerc = rep(0,(maxEmb-1)) #fnnPerc = 100       # first FNN
   
   Ra = sum(diag(var(data))) # estimate of attractor size
   
@@ -89,13 +89,8 @@ mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol =
     samps = samps[sample(length(samps), numSamples)]
   }
   
-  #  samps = read.table("C:/Users/mcoco/Dropbox/crqa_develop/functions_to_integrate/samps_mdFnn.txt", 
-  #                     header = F) 
-  #  samps = as.vector(samps[,1])
-  # length(samps)
-  
   embData = vector()
-  i = 2
+  #i = 2
   for (i in 1:maxEmb){ # embed data
     # print(i)
     embData = cbind(embData, data[(1 + (i-1)*tau):(N-(maxEmb-i)*tau), 1:dims], deparse.level = 0)
@@ -120,7 +115,10 @@ mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol =
     r2d1[1:10]
     yRd1[1:10]
     
-    if (i == 1){
+    #r2d = r2d1 #!
+    #yRd = r2d1 #!
+    
+    if (i == 1){ #!
       r2d = r2d1
       yRd = r2d1
     } else {
@@ -128,28 +126,25 @@ mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol =
       fnnTemp = 0
       j = 1
       for (j in 1:length(r2d1)){
-        temp = dists[, samps[j]] # why is this here?
+        temp = dists[, samps[j]] 
         length(temp)
         temp[1:10]
         
         # check whether neighbors are false
-        Rtol_check = sqrt((temp[yRd1[j]] - r2d[j])/r2d[j]) 
-        Atol_check = abs(temp[yRd1[j]] - r2d[j])/Ra
+        dst = sqrt((temp[yRd1[j]] - r2d[j])/r2d[j]) ## need to store it outside because it could return NAs
         
-        if (is.na(Rtol_check) != T & is.na(Atol_check) != T){
+        if (is.na(dst) == F){ ## need to check whether dst was created
           
-          if (Rtol_check > Rtol || Atol_check > Atol){
+          if (dst  > Rtol || abs(temp[yRd1[j]] - r2d[j])/Ra > Atol){
             
             fnnTemp[j] = 1;
           } else {
             fnnTemp[j] = 0;
           }
-        } else { 
-          fnnTemp[j] = NaN
         }
       }
       
-      fnnPerc[i] = 100*sum(fnnTemp, na.rm = T)/length(fnnTemp); # compute percentage of FNN
+      fnnPerc[i-1] = 100*sum(fnnTemp)/length(fnnTemp); # compute percentage of FNN
       r2d = r2d1;
       yRd = r2d1;
       
@@ -159,4 +154,3 @@ mdFnn = function(data, tau = 1, maxEmb = 10, numSamples = 500, Rtol = 10, Atol =
   embTimes = 1:maxEmb;
   return(list(fnnPerc = fnnPerc, embTimes = embTimes))
 }
-

@@ -91,6 +91,10 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
     if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
     if (exists("ts2")) ts2 = ts2 else stop("No data has been specified for ts2")
     
+    ## check if the method inputted is valid
+    chkmet = method%in%c("rqa", "crqa", "mdcrqa")
+    if (chkmet == F) stop("The method you have used is not valid")
+    
     if (method == "rqa" | method == "crqa"){ ## data for rqa and crqa should be inputted as vector 
       if (is.matrix(ts1)) stop("Your data must consist of a single column of data.")  
       if (is.matrix(ts2)) stop("Your data must consist of a single column of data.")      
@@ -155,8 +159,8 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
               
               {2                     
                 ## z-score                    
-                ts1 = (ts1 - mean(ts1))/sd(ts1)                    
-                ts2 = (ts2 - mean(ts2))/sd(ts2)
+                ts1 = scale(ts1)      
+                ts2 = scale(ts2)
               }
       )
     }

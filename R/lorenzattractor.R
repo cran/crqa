@@ -7,13 +7,11 @@
 
 ## numsteps: the number of simulated points 
 ## dt, sigma, b, r: the parameters shaping the motion
-## plots = a logical value indicating whether the attractor
-##        should be plotted or not
 
 ## possible initial values (standard parameters, Lorenz, 1963)
 # numsteps = 2 ^ 11; dt = .01; sigma = 10; r = 28; b = 8/3;
 
-lorenzattractor <- function(numsteps, dt, sigma, r, b, plots){
+lorenzattractor <- function(numsteps, dt, sigma, r, b){
     
 #    require(plot3D)
     
@@ -31,18 +29,6 @@ lorenzattractor <- function(numsteps, dt, sigma, r, b, plots){
         x[i,2] = x[i,2] + dt*(-x0[2] + x0[1] * (r - x0[3]))
         x[i,3] = x[i,3] + dt*(x0[1]*x0[2]- b*x0[3])
         x0 = x[i,]
-    }
-
-    if (plots == TRUE){
-
-        scatter3D(x[,1], x[,2], x[,3], phi = 30,
-                  xlab = "",
-                  ylab = "",
-                  zlab = "",
-                  theta = 30, bty = "g", type = "l", 
-                  ticktype = "detailed",
-                  lwd = 4)
-
     }
 
     return(x)
