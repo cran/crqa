@@ -23,10 +23,11 @@ spdiags <- function(A) { # A is a matrix
     d<-rep(0,nd)
     tv<-rep(0,k)
     tres<-.Fortran("jspd",m=as.integer(m), n=as.integer(n), k=as.integer(k),
-                   Adata=as.double(Adata), jb=as.integer(jb), 
-                   Bdata=as.double(Bdata), d=as.integer(d), tv=as.double(tv),
-                   na=as.integer(na), nb=as.integer(nb), nd=as.integer(nd) )
-                                        #   print(str(tres))
+                    Adata=as.double(Adata), jb=as.integer(jb), 
+                    Bdata=as.double(Bdata), d=as.integer(d), tv=as.double(tv),
+                    na=as.integer(na), nb=as.integer(nb), nd=as.integer(nd) )
+                                         #   print(str(tres))
+    
     jb<-tres$jb
     d<-tres$d[1:jb]
     Bdata<-tres$Bdata[1:(jb*k)]

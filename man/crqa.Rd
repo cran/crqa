@@ -93,6 +93,7 @@ metric, datatype)
     line structures}
   \item{TT}{The average length of vertical line structures}
   \item{catH}{Entropy of categorical recurrence plots based on rectangular block structures}
+  \item{max_vertlength}{The maximum vertical line length}
   \item{RP}{The Recurrence Plot sparse matrix data}
 }
 
@@ -131,7 +132,7 @@ ans = crqa(narrator, listener, delay, embed, rescale, radius, normalize,
            mindiagline, minvertline, tw, whiteline, recpt, side, method,
            metric, datatype)
 
-print(ans[1:10]) ## last argument of list is the recurrence plot
+print(ans[1:11]) ## last argument of list is the recurrence plot
 
 }
 

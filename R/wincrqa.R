@@ -198,7 +198,7 @@ wincrqa <- function(ts1,
       if (length(RP) == 1) { RP = vector() }
       
       ## if trend needs to be calculated do it here
-      ans = as.numeric( unlist(ans[1:10]) )
+      ans = as.numeric( unlist(ans[1:11]) )
       
       #print(c(i, ans))
   
@@ -246,7 +246,8 @@ wincrqa <- function(ts1,
   
   ## name the measures
   colnames(crqwin) = c("RR", "DET", "NRLINE", "maxL", "L", 
-                       "ENTR", "rENTR", "LAM", "TT", "catH", "win", "TREND")
+                       "ENTR", "rENTR", "LAM", "TT", "catH", 
+                       "max_vertlength", "win", "TREND")
   
   return(as.data.frame(crqwin))
   

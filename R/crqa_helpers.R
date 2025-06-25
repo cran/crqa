@@ -478,11 +478,11 @@ tt <- function(x, minvertline, whiteline){
     z0 = z0[-length(z0)] #(end)=[];
   }
   
-  
   t = sort(z1-z0);
-  t1 = t[which(t-1 > 0)]
+  t1 = t[t >= minvertline]
   
   TT = mean(t1) ## trapping time
+  max_vertlength = max(t1)
   
   ## calculate laminarity: the amount of laminar phases in the system.
   nrbln = sum(x) ## nr. of recurrent points
@@ -577,6 +577,6 @@ tt <- function(x, minvertline, whiteline){
     
   } else {  tw = NA }
   
-  return(list (TT = TT, lam = lam, tw = tw, tb = t) )
+  return(list (TT = TT, lam = lam, max_vertlength = max_vertlength, tw = tw, tb = t) )
   
 }

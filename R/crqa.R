@@ -332,7 +332,7 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
     diaglines = sort( diff(which(B == FALSE) ) -1, decreasing = TRUE)
     
     ## Delete line counts less than the minimum diagonal.
-    diaglines = diaglines[-which(diaglines < mindiagline)]
+    diaglines = diaglines[diaglines >= mindiagline]
     ## diaglines(diaglines>200)=[]; # Can define a maximum line length too.
     
     ## exlude the rare cases where there are no diaglines
@@ -365,7 +365,7 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
       
       ## calculate laminarity and trapping time
       restt = tt(S, minvertline, whiteline)            
-      lam = restt$lam; TT = restt$TT
+      lam = restt$lam; TT = restt$TT; max_vertlength = restt$max_vertlength
       
       ## let's calculate categorical entropy
       if (side == 'both' & datatype == 'categorical' & radius <= .1){ 
@@ -382,19 +382,22 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
       
       numdiaglines = 0; maxline = 0; pdeter = NA;
       entropy = NA; relEntropy = NA; meanline = 0
-      lam = 0; TT = 0; catH = NA; RP = NA; 
+      lam = 0; TT = 0; catH = NA; max_vertlength = NA; 
+      RP = NA; 
     }
     
     results = list(RR = percentrecurs, DET = pdeter, 
                    NRLINE = numdiaglines, maxL = maxline, 
                    L = meanline, ENTR = entropy, 
                    rENTR = relEntropy,
-                   LAM = lam, TT = TT, catH = catH, RP = S)
+                   LAM = lam, TT = TT, catH = catH, 
+                   max_vertlength = max_vertlength, RP = S)
     
   } else { # print (paste ("No recurrence found") )
     results = list(RR = 0, DET = NA, NRLINE = 0,
                    maxL = 0, L = 0, ENTR = NA, rENTR = NA,
-                   LAM = NA, TT = NA, catH = NA, RP = NA)}  
+                   LAM = NA, TT = NA, catH = NA, 
+                   max_vertlength = NA, RP = NA)}  
   
   return (results)
   

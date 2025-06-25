@@ -1,7 +1,7 @@
-c9a7e9b760409f3c8166313de138c1aa *DESCRIPTION
+45fad7cb4cca3ade5ecac0e73e18dc6b *DESCRIPTION
 b94d68d2101f030e0757510044c8432e *NAMESPACE
-c28d12c7ce916b85d1605541237852fa *R/crqa.R
-7b34c07079805f3c89682660ce26e736 *R/crqa_helpers.R
+9c9e5f3c1f7fee9484d25f4359b12838 *R/crqa.R
+cdac1ff3d17c91218b1767791ba15300 *R/crqa_helpers.R
 1bca1298d88e9733733d6d02837d6c40 *R/drpfromts.R
 25b4dec80d72f3b78df2ab59680e0e85 *R/lorenzattractor.R
 53572d9f97b9948e75f09d428b7f5f5f *R/mdDelay.R
@@ -10,10 +10,10 @@ bb36ef17f232f21a204a68194788aabb *R/optimizeParam.R
 0f7e7db9bf97db04585339c1ca12a897 *R/piecewiseRQA.R
 a49a86d108e807699a3c65642645dd28 *R/plot_rp.R
 0264d4c328a7a32ec30714b4a3e16dc8 *R/simts.R
-ef263b24aca130d3cc80288cd67e1fd4 *R/spdiags.R
-15a3f3b84973c3a01a5026fa5c511365 *R/wincrqa.R
+95192570f6202f2088a2411074204f43 *R/spdiags.R
+aea27cf2d87253315f8515481443424d *R/wincrqa.R
 f298f8fdd2470c8a13528955450ae39b *R/windowdrp.R
-15c32c5a1219d60a758fb51566159385 *build/vignette.rds
+b9c376808ed785335c3c9eddf1253ba0 *build/vignette.rds
 420c65a29e5acfc7099c53325c92ac23 *data/crqa.RData
 90762e00010af805aadf1c3400cf6309 *inst/CITATION
 aa57b4019a1820be9ca98f33c6829a7b *inst/doc/crqa_tutorial.R
@@ -24,7 +24,7 @@ c71e5d6077226b238da9296afc0d7287 *man/Figure_2.Rd
 42ba61f68c2edad698bddb8e53fdf456 *man/Figure_3.Rd
 5787c938aeb5d64c974c2e5e0eedd421 *man/Figure_6.Rd
 b71477a0318dc0885746cafe7d6be458 *man/crqa-package.Rd
-813c703e40c51884c7ad6034331d1f6a *man/crqa.Rd
+60b6e9098f286e7d9086c020f0435518 *man/crqa.Rd
 3f628bad649eab76074350b2e27083f9 *man/drpfromts.Rd
 94c72641375e2f016850535c2df288d2 *man/eyemovement.Rd
 641cc8c035fb6438d23b0b409307d3cb *man/handmovement.Rd
