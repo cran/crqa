@@ -1,0 +1,8 @@
+## Enable OpenMP for the fused C++ kernel (crqa_fused.cpp). The
+## $(SHLIB_OPENMP_CXXFLAGS) macro is provided by R's configure step and
+## expands to the right flag for the active compiler (e.g. -fopenmp on
+## gcc/clang). On platforms where OpenMP is unavailable, the macro
+## expands to nothing and the kernel falls back to single-threaded
+## execution thanks to the `#ifdef _OPENMP` guards in the source.
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS     = $(SHLIB_OPENMP_CXXFLAGS)

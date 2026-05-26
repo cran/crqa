@@ -4,6 +4,7 @@
 
 ###############################################################
 
+
 ami <- function(ts1, ts2, lag){
   
   lag = round(lag);   ## make sure that lags are integers
@@ -401,6 +402,22 @@ numerify <- function( ts1, ts2 ){
 
 # ===============================================================
 
+## theiler_exclusion(): how many cells are blanked by a Theiler window of
+## width `w` in an m x n recurrence plot. w=0 returns 0 (no exclusion);
+## w=1 excludes the main diagonal only; w=k excludes 2k-1 diagonals
+## centred on the main one. Works for both square and rectangular
+## matrices (the rectangular case correctly accounts for the asymmetric
+## diagonal lengths). Used to compute the denominator of the recurrence
+## rate so that Theiler-blanked cells are not counted as "missed"
+## recurrences. Concept adapted from a community PR by pjbruna
+## (https://github.com/pjbruna/crqa, branch issue-27/fix-percentrecurs).
+
+theiler_exclusion <- function(m, n = m, w = 1L) {
+  if (w <= 0L) return(0L)
+  d_seq <- seq.int(-(w - 1L), w - 1L)
+  sum(pmax(0L, pmin(m - pmax(0L, -d_seq), n - pmax(0L, d_seq))))
+}
+
 theiler <- function(S,tw) {
   
   if (tw > nrow(S)) stop ("crqa(); tw() Theiler window larger
@@ -576,7 +593,191 @@ tt <- function(x, minvertline, whiteline){
     tw = tw
     
   } else {  tw = NA }
-  
+
   return(list (TT = TT, lam = lam, max_vertlength = max_vertlength, tw = tw, tb = t) )
-  
+
 }
+
+## ===============================================================
+## line_stats_white(): white vertical-line statistics for an RP.
+## "White lines" are runs of FALSE between two TRUE entries in the
+## same column — they are gaps of length g >= 1 separating recurrent
+## stretches. Mean white line length approximates the average
+## inter-recurrence time; the entropy of the white-line distribution
+## is the recurrence-time entropy (RTE; Faure & Korn 2004 / Little
+## et al. 2007), a published RQA quantifier used for transition
+## detection.
+##
+## Cost: O(k) where k = number of recurrent points. Reuses the same
+## sparse-index pass that line_stats() already does, so combined the
+## two scans are still asymptotically O(k log k).
+##
+## Returns:
+##   wlines      : vector of white-line lengths (lengths >= 1)
+##   wmean       : mean white line length (NA if no white lines)
+##   wmax        : maximum white line length (NA if none)
+##   wENTR       : Shannon entropy of the white-line length
+##                 distribution, sometimes called recurrence-time
+##                 entropy (NA if < 2 distinct lengths)
+
+line_stats_white <- function(ii_v, jj_v) {
+  n <- length(ii_v)
+  if (n < 2L) {
+    return(list(wlines = integer(0), wmean = NA_real_,
+                wmax = NA_real_, wENTR = NA_real_))
+  }
+  ## ii_v, jj_v are already sorted by (jj, ii) by line_stats():
+  ## within each column, ii_v is increasing. A white line of length g
+  ## exists between consecutive recurrent rows i_a, i_b iff i_b - i_a > 1,
+  ## in which case g = i_b - i_a - 1.
+  same_col <- jj_v[-1L] == jj_v[-n]
+  gaps     <- ii_v[-1L] - ii_v[-n] - 1L
+  wlines   <- gaps[same_col & gaps >= 1L]
+
+  if (length(wlines) == 0L) {
+    return(list(wlines = integer(0), wmean = NA_real_,
+                wmax = NA_real_, wENTR = NA_real_))
+  }
+  wmean <- mean(wlines)
+  wmax  <- max(wlines)
+  tab   <- tabulate(wlines)
+  p     <- tab[tab > 0L] / sum(tab)
+  wENTR <- if (length(p) >= 2L) -sum(p * log(p)) else NA_real_
+
+  list(wlines = wlines, wmean = wmean, wmax = wmax, wENTR = wENTR)
+}
+
+## ===============================================================
+## line_stats(): single-pass computation of diagonal and vertical
+## line statistics from a sparse recurrence matrix.
+##
+## Replaces the spdiags() -> dense B matrix -> diff(which(B==FALSE))
+## chain and the tt() vertical scan with one pass over the sparse
+## (i, j) indices of S. Algorithmic complexity drops from O(N^2) (the
+## spdiags Fortran routine plus the dense B materialisation, which
+## together accounted for ~80% of crqa() runtime in profiling) to
+## O(k log k) where k = number of recurrent points.
+##
+## The output is numerically identical to the original chain for
+## diagonal lines (multiset of run lengths >= mindiagline) and for
+## the three vertical statistics that crqa() actually returns
+## (max_vertlength, TT, lam). The whiteline option is intentionally
+## not supported here because white-line statistics are never
+## propagated to crqa()'s return list (see crqa.R: tt() is called
+## but only $TT, $lam, $max_vertlength are extracted; $tw is
+## discarded). Callers that need whiteline stats should still invoke
+## tt() directly.
+##
+## Arguments:
+##   S            : a (post-theiler, post-side) sparse recurrence matrix
+##   mindiagline  : minimum diagonal line length to count
+##   minvertline  : minimum vertical line length to count
+##
+## Returns: list with elements
+##   numrecurs       : number of recurrent points (= sum of S != 0)
+##   diaglines       : integer vector, line lengths >= mindiagline, sorted decreasing
+##   max_vertlength  : max vertical line length >= minvertline (-Inf if none)
+##   TT              : mean vertical line length >= minvertline (NaN if none)
+##   lam             : laminarity = sum(vert_lines>=minvertline)/numrecurs*100
+
+line_stats <- function(S, mindiagline, minvertline, whiteline = FALSE) {
+
+  ## Extract (row, col) of recurrent points from S without materialising
+  ## a dense matrix. We go through the triplet (COO) representation and
+  ## explicitly drop any stored zeros (theiler() and the side-mask code
+  ## leave explicit zeros in S, and `which(S != 0)` does not always
+  ## dispatch correctly across sparse-matrix subclasses).
+  S_t <- methods::as(Matrix::drop0(S), "TsparseMatrix")
+  ii  <- S_t@i + 1L                       ## 1-indexed row
+  jj  <- S_t@j + 1L                       ## 1-indexed col
+  ## Pattern matrices (e.g. ngTMatrix) have no @x slot — every stored
+  ## entry is implicitly TRUE. Numeric / logical sparse triplet matrices
+  ## have @x and may carry explicit FALSE / 0 values from theiler() or
+  ## the side mask, which must be filtered out.
+  if ("x" %in% methods::slotNames(S_t) && length(S_t@x) > 0L) {
+    keep <- as.logical(S_t@x) & !is.na(S_t@x)
+    ii   <- ii[keep]; jj <- jj[keep]
+  }
+  numrecurs <- length(ii)
+  ind <- if (numrecurs > 0L) cbind(row = ii, col = jj) else matrix(0L, 0L, 2L)
+
+  if (numrecurs == 0L) {
+    return(list(
+      numrecurs      = 0L,
+      diaglines      = integer(0),
+      max_vertlength = -Inf,
+      TT             = NaN,
+      lam            = 0,
+      wmean          = NA_real_,
+      wmax           = NA_real_,
+      wENTR          = NA_real_,
+      wlines         = integer(0)
+    ))
+  }
+
+  n <- numrecurs   ## ii, jj already populated above from triplet slots
+
+  ## ----- diagonal lines: group by d = j - i, run-length on i -----
+  d_idx <- jj - ii
+  ord   <- order(d_idx, ii)
+  ii_d  <- ii[ord]
+  d_s   <- d_idx[ord]
+
+  if (n > 1L) {
+    new_run <- c(TRUE,
+                 d_s[-1L]  != d_s[-n] |
+                 ii_d[-1L] != (ii_d[-n] + 1L))
+  } else {
+    new_run <- TRUE
+  }
+  diag_runs  <- tabulate(cumsum(new_run))
+  diaglines  <- sort(diag_runs[diag_runs >= mindiagline], decreasing = TRUE)
+
+  ## ----- vertical lines: group by j, run-length on i -----
+  ord2 <- order(jj, ii)
+  ii_v <- ii[ord2]
+  jj_v <- jj[ord2]
+
+  if (n > 1L) {
+    new_vrun <- c(TRUE,
+                  jj_v[-1L] != jj_v[-n] |
+                  ii_v[-1L] != (ii_v[-n] + 1L))
+  } else {
+    new_vrun <- TRUE
+  }
+  vert_runs <- tabulate(cumsum(new_vrun))
+  vert_min  <- vert_runs[vert_runs >= minvertline]
+
+  if (length(vert_min) > 0L) {
+    max_vertlength <- max(vert_min)
+    TT_val         <- mean(vert_min)
+    lam            <- (sum(vert_min) / numrecurs) * 100
+  } else {
+    ## match the original tt() output when no vertical line >= minvertline:
+    ## tt() returns max(integer(0)) = -Inf with warning and mean(integer(0)) = NaN
+    max_vertlength <- -Inf
+    TT_val         <- NaN
+    lam            <- 0
+  }
+
+  ## white-line statistics (cheap: reuses ii_v, jj_v already sorted by column)
+  if (isTRUE(whiteline)) {
+    ws <- line_stats_white(ii_v, jj_v)
+  } else {
+    ws <- list(wmean = NA_real_, wmax = NA_real_, wENTR = NA_real_,
+               wlines = integer(0))
+  }
+
+  list(
+    numrecurs      = numrecurs,
+    diaglines      = diaglines,
+    max_vertlength = max_vertlength,
+    TT             = TT_val,
+    lam            = lam,
+    wmean          = ws$wmean,
+    wmax           = ws$wmax,
+    wENTR          = ws$wENTR,
+    wlines         = ws$wlines
+  )
+}
+

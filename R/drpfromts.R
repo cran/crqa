@@ -14,12 +14,14 @@
 
 .packageName <- 'crqa'
 
-drpfromts <- function(ts1, ts2, windowsize,  
+drpfromts <- function(ts1, ts2, windowsize,
                       radius = 0.001, delay = 1, embed = 1, rescale = 0,
                       normalize = 0, mindiagline = 2, minvertline = 2,
-                      tw = 0, whiteline = F, recpt = F, side = 'both', 
-                      method = 'crqa', metric = 'euclidean', 
-                      datatype = 'categorical'){
+                      tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both',
+                      method = 'crqa', metric = 'euclidean',
+                      datatype = 'categorical',
+                      rr_denom = "full"){
+  rr_denom <- match.arg(rr_denom, c("full", "valid"))
   
   
   if(method != "mdcrqa"){ ## in case the method is multi-dimensional do not perform checks on vectors
@@ -44,9 +46,9 @@ drpfromts <- function(ts1, ts2, windowsize,
     }
   }
   
-  res = crqa(ts1, ts2, delay, embed, rescale, radius, normalize, 
-             mindiagline, minvertline, tw, whiteline, recpt, side, 
-             method, metric, datatype)
+  res = crqa(ts1, ts2, delay, embed, rescale, radius, normalize,
+             mindiagline, minvertline, tw, whiteline, recpt, side,
+             method, metric, datatype, rr_denom = rr_denom)
   
   RP = res$RP
   

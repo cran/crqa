@@ -8,75 +8,77 @@
 }
 
 \description{
- Auto, Cross and Multi-dimensional recurrence quantification analysis. 
-    Different methods for computing recurrence, cross vs. multidimensional
-    or profile iti.e., only looking at the diagonal recurrent points, 
-    as well as functions for optimization and plotting are proposed.
-    in-depth measures of the whole cross-recurrence plot,
-    Please refer to by Coco and Dale (2014) <doi:10.3389/fpsyg.2014.00510> 
-    and Wallot (2018) <doi: 10.1080/00273171.2018.1512846>
-    for further details about the method.
+  Auto, cross, and multidimensional recurrence quantification analysis
+  (RQA/CRQA/MdCRQA). The package computes in-depth measures of recurrence
+  plots for continuous and categorical time series, supports diagonal
+  profile analysis, windowed analysis, and parameter optimisation.
+  Since v2.1.0 the core kernel is implemented as a fused Rcpp inner
+  loop with OpenMP parallelism (transparently falling back to serial
+  on platforms without OpenMP support), and an approximative path
+  (\code{method = "aRQA"}) scales to very long series (N >> 10^5)
+  with negligible memory footprint.
+  See Coco and Dale (2014) <doi:10.3389/fpsyg.2014.00510>,
+  Wallot (2018) <doi:10.1080/00273171.2018.1512846>, and
+  Coco et al. (2021) <doi:10.32614/RJ-2021-062> for methodological
+  background.
 }
 
 \details{
 
-\code{crqa}: Core recurrence function, which examines
-  recurrent structures of a single rqa, two crqa, 
-  or multidimensional time-series mdcrqa, which are
-  time-delayed and embedded in higher dimensional space.
-  The approach compares the phase space trajectories of 
-  the time-series in the same phase-space when delays are
-  introduced. A distance matrix between the time-series,
-  delayed and embedded is calculated. Several measures
-  representative of the underlying dynamics of the system
-  are extracted.
+\code{crqa}: Core recurrence function. Examines recurrent structures of a
+  single (\code{method = "rqa"}), two (\code{method = "crqa"}), or
+  multidimensional (\code{method = "mdcrqa"}) time series embedded in
+  phase space. Since v2.1.0 also supports \code{method = "aRQA"} for
+  approximative auto-RQA via phase-space histogram binning, scaling to
+  N >> 10^5 in O(N) memory. A fused C++ inner loop (euclidean, maximum,
+  manhattan metrics) avoids materialising the full distance matrix
+  for the exact path as well.
 
-\code{drpfromts}: Method to explore the diagonal profile of 
-  the recurrence plot (Auto, Cross, or Multi-dimensional).
-  It returns the recurrence for different delays, 
-  the maximal recurrence observed and the delay at which it occurred.
-  
-\code{lorenzattractor}: An implementation of the Lorenz dynamical system,
-  which describes the motion of a possible particle, which will
-  neither converge to a steady state, nor diverge to infinity;
-  but rather stay in a bounded but 'chaotically' defined
-  region, i.e., an attractor. 
+\code{aRQA}: Approximative RQA via the phase-space histogram method of
+  Schultz et al. (2015). Exported as a standalone function;
+  also accessible via \code{crqa(\ldots, method = "aRQA")}.
 
-\code{mdDelay}:Estimates time delay for embedding of a 
-multi-dimensional dataset.
+\code{drpfromts}: Diagonal recurrence profile. Returns per-lag recurrence
+  rates across a range of delays for auto, cross, or multidimensional RQA.
 
-\code{mdFnn}: Computes the percentage of false nearest
-neighbors for multidimensional time series as a function 
-of embedding dimension.
+\code{lorenzattractor}: Simulate the Lorenz chaotic attractor.
 
-\code{optimizeParam}:   Iterative procedure to examine the values
-  of delay, embedding dimension and radius 
-  to compute recurrence plots of one, two, 
-  or more time-series.
+\code{rosslerattractor}: Simulate the Roessler chaotic attractor.
+  Particularly useful for benchmarking RQA implementations.
 
-\code{piecewiseRQA}: This is a convenience function which breaks down 
-the computation of large recurrence plots into a collection of
-smaller recurrence plots. It can ease speed and memory issues
-if an appropriate size for the block is found.
+\code{mdDelay}: Estimate the time delay for embedding a multidimensional
+  dataset using average mutual information.
 
-\code{plotRP}: A convenience function to plot the RP matrix returned by 
-  the crqa.
+\code{mdFnn}: Compute the percentage of false nearest neighbours for
+  multidimensional time series as a function of embedding dimension.
 
-\code{simts}: A simple algorithm for producing a time-series that drives
-  a second time-series using parameters, which change independent and conditional
-  probability of an event to occur.
+\code{optimizeParam}: Iterative grid search over delay, embedding dimension,
+  and radius to find parameters that yield a target recurrence rate.
 
-\code{wincrqa}: A recurrence plot is computed in overlapping
-  windows of a certain size for a number of delays smaller
-  than the size of the window; and measures of it extracted.
+\code{piecewiseRQA}: Block-wise RQA for structural decomposition of the RP.
+  Splits the time series into consecutive blocks and aggregates the
+  resulting measures. Useful when the research question calls for
+  examining changes in recurrence structure across time, or when
+  integrating RQA with sliding-window analyses at a coarser resolution
+  than \code{wincrqa}. Supports parallel computation via \code{workers}.
 
-\code{windowdrp}:  A recurrence plot is computed in overlapping
-  windows of a specified size for a number of
-  delays smaller than the size of the window.
-  In every window, the recurrence value for the
-  different delays is calculated.
-  A mean is then taken across the delays to obtain
-  a recurrence value in that particular window.
+\code{plot_rp}: Plot a recurrence plot returned by \code{crqa} using
+  ggplot2.
+
+\code{simts}: Simulate a coupled pair of categorical time series with
+  controlled joint and conditional event probabilities.
+
+\code{theiler_exclusion}: Helper to count the number of cells excluded
+  by a Theiler window and one-sided mask, for use in the \code{rr_denom}
+  calculation.
+
+\code{wincrqa}: Windowed recurrence analysis. Computes a recurrence plot
+  in overlapping windows and returns per-window recurrence measures.
+  Supports parallel computation via \code{workers}.
+
+\code{windowdrp}: Windowed diagonal recurrence profile. Like
+  \code{wincrqa} but returns only the recurrence profile across delays
+  averaged within each window.
 
 }
 
@@ -124,7 +126,7 @@ ans = crqa(narrator, listener, delay, embed, rescale, radius, normalize,
            mindiagline, minvertline, tw, whiteline, recpt, side, method, metric, 
            datatype)
 
-print(ans[1:10]) ## last argument of list is the recurrence plot
+print(ans[!names(ans) \%in\% "RP"])
 
 
 }

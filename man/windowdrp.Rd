@@ -17,8 +17,13 @@
 
 \usage{
 windowdrp(ts1, ts2, windowstep, windowsize, lagwidth,
-radius, delay, embed, rescale, normalize, mindiagline, minvertline,
-tw, whiteline, recpt, side, method, metric, datatype)
+radius = 0.001, delay = 1, embed = 1, rescale = 0,
+normalize = 0, mindiagline = 2, minvertline = 2,
+tw = 0, whiteline = FALSE, recpt = FALSE, side = "both",
+method = "crqa", metric = "euclidean",
+datatype = "continuous",
+workers = 1L,
+rr_denom = "full")
 
 }
 
@@ -46,7 +51,9 @@ tw, whiteline, recpt, side, method, metric, datatype)
   \item{normalize}{Normalize the time-series;
     if normalize = 0 (do nothing);
     if normalize = 1 (Unit interval);
-    if normalize =  2 (z-score).}
+    if normalize =  2 (z-score).
+    Since v2.1.0, normalization is applied once to the \emph{full} series
+    before windowing, so all windows share the same scale.}
   \item{mindiagline}{A minimum diagonal length of
     recurrent points. Usually set to 2, as it takes
     a minimum of two points to define any line.}
@@ -69,8 +76,13 @@ tw, whiteline, recpt, side, method, metric, datatype)
   \item{metric}{A string to indicate the type of 
   distance metric used, default is euclidean but 
   see help rdist() to list all other possible metrics.} 
-\item{datatype}{a string (continuous or categorical) 
+\item{datatype}{a string (continuous or categorical)
   to indicate whether the nature of the data type}
+\item{workers}{Integer; number of parallel workers (default 1 =
+  serial). New in v2.1.0; see \code{\link{wincrqa}} for the
+  parallel-execution caveats.}
+\item{rr_denom}{Forwarded to \code{\link{drpfromts}} and on to
+  \code{\link{crqa}}. New in v2.1.0; see \code{\link{crqa}}.}
 
 }
   

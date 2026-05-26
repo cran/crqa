@@ -10,9 +10,15 @@
   the maximal recurrence observed and the delay at which it occurred.
 }
 
-\usage{ drpfromts(ts1, ts2, windowsize, radius,
-delay, embed, rescale, normalize, mindiagline, minvertline, tw,
-whiteline, recpt, side, method, metric, datatype) }
+\usage{
+drpfromts(ts1, ts2, windowsize, radius = 0.001,
+delay = 1, embed = 1, rescale = 0,
+normalize = 0, mindiagline = 2, minvertline = 2, tw = 0,
+whiteline = FALSE, recpt = FALSE, side = "both",
+method = "crqa", metric = "euclidean",
+datatype = "categorical",
+rr_denom = "full")
+}
 
 \arguments{
   
@@ -57,8 +63,11 @@ whiteline, recpt, side, method, metric, datatype) }
   \item{metric}{A string to indicate the type of 
   distance metric used, default is euclidean but 
   see help rdist() to list all other possible metrics.} 
-  \item{datatype}{a string (continuous or categorical) 
+  \item{datatype}{a string (continuous or categorical)
   to indicate whether the nature of the data type}
+  \item{rr_denom}{Forwarded to \code{\link{crqa}}; choice of
+    recurrence-rate denominator. New in v2.1.0; see
+    \code{\link{crqa}} for details.}
   }
 
 \value{

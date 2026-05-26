@@ -28,9 +28,8 @@ lorenzattractor(numsteps, dt, sigma, r, b)
 
 
 \value{
-  
-  It returns a matrix with the 3 dimensions of the Lorenz
-  
+A numeric matrix with \code{numsteps} rows and three columns
+(\code{x}, \code{y}, \code{z}).
 }
   
 \references{

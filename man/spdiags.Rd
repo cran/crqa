@@ -18,18 +18,18 @@
 }
 
 \details{
-  
+
   Compared to the original Matlab implementation:
-  1) it does not handle the case with more than one input,
-  and  2) (m > n) matrices give the B matrix columns in a
-  different order, but the d vector of indices will also
-  be changed accordingly, so the set of columns is OK,
-  just ordered differently
-  
+  1) it does not handle the case with more than one input.
+  2) Columns in \code{B} are always ordered by ascending diagonal index
+  (\code{d} is sorted increasingly) for all matrix shapes.
+  3) An all-zero input returns an empty \code{B} (0 columns) consistent
+  with the contract of extracting \emph{nonzero} diagonals.
+
 }
 
-\note{For computational efficiency spdiags is actually
-  computed using a Fortan implementation (\code{jspd.f}) }
+\note{Implemented in pure R using vectorized triplet indexing.
+  No compiled code is required.}
 
 
 \value{
@@ -42,7 +42,7 @@
 }
  
  
-\author{John C. Nash (nashjc@uottawa.ca)}
+\author{Moreno I. Coco (moreno.cocoi@gmail.com)}
 
 
 \examples{

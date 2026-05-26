@@ -1,38 +1,31 @@
-### both .R and .f code written by Prof. John C. Nash  <nashjc@uottawa.ca>
-
 .packageName <- 'crqa'
 
-spdiags <- function(A) { # A is a matrix
+spdiags <- function(A) {
+  if (inherits(A, "Matrix")) A <- as.matrix(A)
+  m <- nrow(A)
+  n <- ncol(A)
+  k <- min(m, n)
 
-    m <- dim(A)[[1]]
-    n <- dim(A)[[2]]
-    k <- min(m, n) # length of diagonals
-    if (m > n) { # tall matrix
-        Adata <- as.vector(t(A)) # convert to vector BY ROWS
-    } else { # fat or square matrix (m <= n)
-        Adata <- as.vector(A) # convert to vector BY COLUMNS 
-   }
-#   print(Adata)
-    la<-length(Adata)
-    na<-m*n+2*k*(k-1)
-    Adata <- c(Adata, rep(0,(na-la)))
-    nb<-(m+n)*k
-    nd<-m+n-1
-    jb<-0
-    Bdata<-rep(0,nb)
-    d<-rep(0,nd)
-    tv<-rep(0,k)
-    tres<-.Fortran("jspd",m=as.integer(m), n=as.integer(n), k=as.integer(k),
-                    Adata=as.double(Adata), jb=as.integer(jb), 
-                    Bdata=as.double(Bdata), d=as.integer(d), tv=as.double(tv),
-                    na=as.integer(na), nb=as.integer(nb), nd=as.integer(nd) )
-                                         #   print(str(tres))
-    
-    jb<-tres$jb
-    d<-tres$d[1:jb]
-    Bdata<-tres$Bdata[1:(jb*k)]
-#   print(Bdata)
-    if (m > n) d <- -d # reset index
-    B <- matrix(Bdata, nrow=k, byrow=FALSE) # convert to matrix form
-    result<-list(B=B, d=d)
+  nz <- which(A != 0, arr.ind = TRUE)
+
+  if (nrow(nz) == 0L) {
+    return(list(B = matrix(0.0, nrow = k, ncol = 0L), d = integer(0L)))
+  }
+
+  rows     <- nz[, 1L]
+  cols     <- nz[, 2L]
+  d_elem   <- cols - rows                  # diagonal offset (col - row)
+  active_d <- sort(unique(d_elem))
+  p        <- length(active_d)
+
+  # Position within each B column follows MATLAB spdiags convention:
+  #   fat/square (m <= n): row index of element
+  #   tall       (m >  n): col index of element
+  pos <- if (m <= n) rows else cols
+  grp <- match(d_elem, active_d)           # column in B for each nonzero
+
+  B        <- matrix(0.0, nrow = k, ncol = p)
+  B[cbind(pos, grp)] <- A[nz]
+
+  list(B = B, d = active_d)
 }

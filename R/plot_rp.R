@@ -16,6 +16,17 @@ plot_rp <- function(rp_matrix,
   Var1 = Var2 = value = NA
   
   geom <- match.arg(geom)
+  ## Guard against the aRQA case: method="aRQA" never materialises the
+  ## recurrence matrix (that's the whole point of its O(N) cost), so the
+  ## $RP element in a crqa() result with method="aRQA" is NA. Flag this
+  ## explicitly so users do not get a confusing as.matrix(NA) error.
+  if (length(rp_matrix) == 1L && is.na(rp_matrix)) {
+    stop("plot_rp(): the input is NA. This typically means the recurrence ",
+         "matrix was never built. Set method='rqa' / 'crqa' / 'mdcrqa' ",
+         "instead of method='aRQA' if you need to visualise the RP. ",
+         "The approximative method (aRQA) computes RQA measures without ",
+         "materialising the matrix and therefore has no plottable output.")
+  }
   # In most cases rp_matrix is a sparse matrix from the Matrix package,
   # so we convert it to a regular matrix first.
   rp_matrix <- as.matrix(rp_matrix)

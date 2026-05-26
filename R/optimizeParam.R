@@ -38,7 +38,9 @@
 
 .packageName <- 'crqa'
 
-optimizeParam <- function(ts1, ts2, par, min.rec = 2, max.rec = 5){
+optimizeParam <- function(ts1, ts2, par, min.rec = 2, max.rec = 5,
+                          rr_denom = "full"){
+  rr_denom <- match.arg(rr_denom, c("full", "valid"))
   
   ## Initialize attached variables
   method = metric = maxlag = radiusspan = 
@@ -213,27 +215,31 @@ or explore more lags (maxlag) on a larger number of bins (nbins)")})
     
     ## get a percentage of reduction of false neighbours
     ## based on the first dimension
-    fnn_ts1   = mdFnn(ts1, delay_ts1, maxEmb, numSamples, Rtol, Atol)  
-    fnn_ts2   = mdFnn(ts2, delay_ts2, maxEmb, numSamples, Rtol, Atol)
+    ## suppressWarnings: the tseriesChaos FNN code can produce
+    ## "NaNs produced" from sqrt() when distances are zero; the NaN
+    ## rows are filtered out below and do not affect the result.
+    fnn_ts1 <- suppressWarnings(mdFnn(ts1, delay_ts1, maxEmb, numSamples, Rtol, Atol))
+    fnn_ts2 <- suppressWarnings(mdFnn(ts2, delay_ts2, maxEmb, numSamples, Rtol, Atol))
     
-    fnnfraction1 = fnn_ts1[[1]]
-    ixi_min = which(fnnfraction1 == min(fnnfraction1))
-    if (length(ixi_min) > 1){
-      embmints1 = ixi_min[1]
+    fnnfraction1 <- fnn_ts1[[1]]
+    fnnfraction1 <- fnnfraction1[is.finite(fnnfraction1)]   ## drop NaN/Inf
+    if (length(fnnfraction1) == 0L) {
+      embmints1 <- 1L
     } else {
-      embmints1 = ixi_min
+      ixi_min <- which(fnnfraction1 == min(fnnfraction1))
+      embmints1 <- if (length(ixi_min) >= 1L) ixi_min[1L] else 1L
     }
-    
-    
-    fnnfraction2 = fnn_ts2[[1]]
-    ixi_min = which(fnnfraction2 == min(fnnfraction2))
-    if (length(ixi_min) > 1){
-      embmints2 = ixi_min[1]
-    } else { 
-      embmints2 = ixi_min
-      }
-    
-    embdim = max( c(embmints1, embmints1) ) 
+
+    fnnfraction2 <- fnn_ts2[[1]]
+    fnnfraction2 <- fnnfraction2[is.finite(fnnfraction2)]
+    if (length(fnnfraction2) == 0L) {
+      embmints2 <- 1L
+    } else {
+      ixi_min <- which(fnnfraction2 == min(fnnfraction2))
+      embmints2 <- if (length(ixi_min) >= 1L) ixi_min[1L] else 1L
+    }
+
+    embdim = max( c(embmints1, embmints2) )   ## was embmints1 twice (typo)
     
   }
   
@@ -308,9 +314,9 @@ or explore more lags (maxlag) on a larger number of bins (nbins)")})
     #print(c("embed",embed))
     #print(c("delay",delay))
     
-    res = crqa(ts1, ts2, delay, embed, rescale, r, normalize, 
-               mindiagline, minvertline, tw, whiteline, recpt, side, 
-               method, metric, datatype) 
+    res = crqa(ts1, ts2, delay, embed, rescale, r, normalize,
+               mindiagline, minvertline, tw, whiteline, recpt, side,
+               method, metric, datatype, rr_denom = rr_denom)
     # print(c("recurr",res$RR))
     ## print("#######")
     ## print("#######")       

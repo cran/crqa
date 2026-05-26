@@ -1,15 +1,19 @@
 useDynLib(crqa, .registration = TRUE)
+importFrom(Rcpp, evalCpp)
 
-export(crqa,
+export(aRQA,
+       crqa,
        drpfromts,
        lorenzattractor,
-       mdDelay, 
+       mdDelay,
        mdFnn,
        optimizeParam,
        piecewiseRQA,
        plot_rp,
+       rosslerattractor,
        simts,
        spdiags,
+       theiler_exclusion,
        wincrqa,
        windowdrp)
 
@@ -21,6 +25,9 @@ importFrom("pracma", circshift, eps, pdist2, polyfit)
 importFrom("stats", sd, median, rnorm, runif, var)  
 importFrom("rdist", cdist)
 importFrom("tseriesChaos", mutual, false.nearest)
+importFrom("methods", as, slotNames)
 importFrom("utils", tail)
+importFrom("future", plan, multisession, availableCores)
+importFrom("furrr", future_map, furrr_options)
 importFrom("dplyr", filter, mutate)
 import("ggplot2")

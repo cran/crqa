@@ -75,9 +75,12 @@
 
 crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
                  radius = 0.001, normalize = 0, mindiagline = 2, minvertline = 2,
-                 tw = 0, whiteline = FALSE, recpt = FALSE, side = "both", 
-                 method = "rqa", metric = "euclidean", datatype = "continuous"){
+                 tw = 0, whiteline = FALSE, recpt = FALSE, side = "both",
+                 method = "rqa", metric = "euclidean", datatype = "continuous",
+                 rr_denom = "full"){
   
+  rr_denom <- match.arg(rr_denom, c("full", "valid"))
+
   # print(data.frame(delay, embed, radius, rescale, 
   #                 normalize, mindiagline, minvertline, tw, whiteline, 
   #                 recpt, side, method, metric, datatype))
@@ -92,8 +95,25 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
     if (exists("ts2")) ts2 = ts2 else stop("No data has been specified for ts2")
     
     ## check if the method inputted is valid
-    chkmet = method%in%c("rqa", "crqa", "mdcrqa")
+    chkmet = method%in%c("rqa", "crqa", "mdcrqa", "aRQA")
     if (chkmet == F) stop("The method you have used is not valid")
+
+    ## --- aRQA short-circuit ---------------------------------------------
+    ## Stage 3a: approximative RQA via phase-space coarse-graining
+    ## (Schultz et al. 2015; Spiegel et al. 2016). Skips the full O(N^2)
+    ## pipeline entirely. Parameters tw, side, whiteline, minvertline,
+    ## metric, recpt are silently ignored on this path: aRQA approximates
+    ## DET/L from histogram statistics rather than scanning a recurrence
+    ## matrix. Vertical-line measures (LAM, TT) and full line-length
+    ## counts (NRLINE, maxL, ENTR) are returned as NA pending a future
+    ## extension; users wanting them should fall back to method="rqa"/"crqa".
+    if (method == "aRQA") {
+      return(aRQA(ts1 = ts1, ts2 = ts2,
+                  delay = delay, embed = embed,
+                  radius = radius, mindiagline = mindiagline,
+                  normalize = normalize))
+    }
+    ## ---------------------------------------------------------------------
     
     if (method == "rqa" | method == "crqa"){ ## data for rqa and crqa should be inputted as vector 
       if (is.matrix(ts1)) stop("Your data must consist of a single column of data.")  
@@ -203,201 +223,285 @@ crqa <- function(ts1, ts2, delay = 1, embed = 1, rescale = 0,
       }
     }
     
-    ## just to have the length of matrix saved
-    dm <- as.matrix(cdist(ts1, ts2, metric = metric))
-    
-    ## Find indeces of the distance matrix that fall
-    ## within prescribed radius.
-    if (rescale > 0){
-      switch(rescale,
-             {1  ## Create a distance matrix that is re-scaled
-               ## to the mean distance
-               
-               rescaledist = mean(dm)    
-               dmrescale   = dm/rescaledist},
-             
-             {2  ## Create a distance matrix that is re-scaled
-               ## to the max distance
-               
-               rescaledist = max(dm);
-               dmrescale   = dm/rescaledist},
-             {3 ## Create a distance matrix that is rescaled 
-               ## to the min distance
-               rescaledist = min(dm);
-               dmrescale   = dm/rescaledist},
-             
-             { 4 ## Create a distance matrix that is rescaled 
-               ## to the euclidean distance
-               dmrescale <- dm/abs(sum(dm)/(nrow(dm)^2-nrow(dm)))}
-      )
-    } else { dmrescale = dm }
-    ## Compute recurrence matrix
-    
-    v1l = nrow(dmrescale); v2l = ncol(dmrescale) ## save the dimension of the matrix
-    
-    ind = which(dmrescale <= radius, arr.ind = TRUE);
-    r = ind[,1]; c = ind[,2]
+    ## ---- Fast path: fused Rcpp inner loop -------------------------------
+    ## When the metric is one we have a tight C++ kernel for, we skip the
+    ## entire cdist -> dm -> threshold -> sparseMatrix -> t() -> theiler ->
+    ## side-mask -> line_stats chain and compute distance + threshold +
+    ## line statistics in a single O(N*M) pass. Memory drops from O(N^2)
+    ## (peak ~2.5x of 8N^2 measured empirically on v2.1.0) to O(N + nnz),
+    ## and runtime drops 3-10x at typical sizes.
+    fused_metric <- match(metric, c("euclidean", "maximum", "manhattan"))
+    use_fused    <- !is.na(fused_metric)
+
+    if (use_fused) {
+      ts1_mat <- if (is.matrix(ts1)) ts1 else matrix(as.double(ts1), ncol = 1L)
+      ts2_mat <- if (is.matrix(ts2)) ts2 else matrix(as.double(ts2), ncol = 1L)
+      storage.mode(ts1_mat) <- "double"
+      storage.mode(ts2_mat) <- "double"
+
+      if (rescale > 0) {
+        rescaledist     <- crqa_rescale_stat(ts1_mat, ts2_mat,
+                                             as.integer(fused_metric),
+                                             as.integer(rescale))
+        effective_radius <- radius * rescaledist
+      } else {
+        effective_radius <- radius
+      }
+      side_id <- match(side, c("both", "upper", "lower")) - 1L
+      if (is.na(side_id)) stop("Unknown side: ", side)
+
+      ls_out  <- crqa_fused_cpp(ts1_mat, ts2_mat,
+                                 as.double(effective_radius),
+                                 as.integer(fused_metric),
+                                 as.integer(tw), as.integer(side_id),
+                                 as.integer(mindiagline),
+                                 as.integer(minvertline),
+                                 isTRUE(whiteline))
+      ## ls_out$v2l = n1 (pre-transpose nrow), ls_out$v1l = n2 (pre-transpose ncol)
+      v1l <- ls_out$v2l
+      v2l <- ls_out$v1l
+      ## Pre-transpose recurrent indices for catEnt (which expects pre-transpose).
+      ## Column names "row"/"col" matter: catEnt/findBlocks index ind by name.
+      ind <- if (ls_out$numrecurs > 0L) {
+        cbind(row = ls_out$jj, col = ls_out$ii)
+      } else {
+        m <- matrix(integer(0), 0L, 2L); colnames(m) <- c("row", "col"); m
+      }
+      r   <- ind[, 1]; c <- ind[, 2]
+      used_fused <- TRUE
+    } else {
+      ## Fallback for metrics not implemented in C++ (canberra, minkowski, ...)
+      dm <- as.matrix(cdist(ts1, ts2, metric = metric))
+      if (rescale > 0) {
+        rescaledist <- switch(rescale,
+          mean(dm),
+          max(dm),
+          min(dm),
+          abs(sum(dm) / (nrow(dm) ^ 2 - nrow(dm)))
+        )
+        effective_radius <- radius * rescaledist
+      } else {
+        effective_radius <- radius
+      }
+      v1l <- nrow(dm); v2l <- ncol(dm)
+      ind <- which(dm <= effective_radius, arr.ind = TRUE)
+      rm(dm)
+      r <- ind[, 1]; c <- ind[, 2]
+      used_fused <- FALSE
+    }
     
   } else { ## take as input an RP directly
     if (exists("ts1")) ts1 = ts1 else stop("No data has been specified for ts1")
     ## as usual R needs fiddly code to make sure about identify of data
     ts1 = matrix(as.logical(ts1), ncol = ncol(ts1))
-    v1l = nrow(ts1); v2l = ncol(ts1)        
-    
+    v1l = nrow(ts1); v2l = ncol(ts1)
+
     ## matrix needs to be logical
     ind = which(ts1 > 0, arr.ind = TRUE)
-    
+
     ## just a trick to reduce the number of lines
     ## of the code
     r = ind[,1]; c = ind[,2]
-    
+    used_fused <- FALSE
   }
-  
+
   if (length(r) != 0 & length(c) != 0){ ##avoid cases with no recurrence
-    
-    S = sparseMatrix(r, c, dims = c(v1l, v2l))
-    ## this is the recurrent plot
-    ## transpose it to make identical to Marwan
-    S = t(S)
-    
-    ## apply the theiler argument here to recurrence matrix
-    ## Marwan blanks out the recurrence along the diag
-    S = theiler(S, tw)
-    
-    if (side == "upper"){
-      ## if only the upper side is of interest
-      ## it blanks out the lowest part
-      S = as.matrix(S)
-      S[lower.tri(S, diag = TRUE)] = 0
-      S = Matrix(S, sparse = TRUE)
+
+    if (isTRUE(used_fused)) {
+      ## Fused path already computed line statistics. Build S from the
+      ## recurrent indices for backwards compatibility: $RP has always been
+      ## returned regardless of `recpt` (which controls input type, not
+      ## output). S construction here is O(nnz log nnz), not O(N^2), so the
+      ## RAM win is preserved relative to the legacy path.
+      S <- sparseMatrix(i = ls_out$ii, j = ls_out$jj,
+                        dims = c(ls_out$v1l, ls_out$v2l))
+      numrecurs <- ls_out$numrecurs
+      diaglines <- ls_out$diaglines
+    } else {
+      ## Legacy path (RP-input branch, or fallback metric).
+      S = sparseMatrix(r, c, dims = c(v1l, v2l))
+      ## this is the recurrent plot
+      ## transpose it to make identical to Marwan
+      S = t(S)
+
+      ## apply the theiler argument here to recurrence matrix
+      ## Marwan blanks out the recurrence along the diag
+      S = theiler(S, tw)
+
+      if (side == "upper"){
+        ## if only the upper side is of interest
+        ## it blanks out the lowest part
+        S = as.matrix(S)
+        S[lower.tri(S, diag = TRUE)] = 0
+        S = Matrix(S, sparse = TRUE)
+      }
+
+      if (side == "lower"){
+        ## viceversa
+        S = as.matrix(S)
+        S[upper.tri(S, diag = TRUE)] = 0
+        S = Matrix(S, sparse = TRUE)
+      }
+
+      if (side == "both"){
+        ## just keep it as is.
+        S = S}
+
+      ####################################################################
+      ## Stage 2 (2026-05): single sparse-index scan in line_stats().
+      ####################################################################
+      ls_out = line_stats(S, mindiagline, minvertline, whiteline = whiteline)
+      numrecurs = ls_out$numrecurs
+      diaglines = ls_out$diaglines
     }
-    
-    if (side == "lower"){
-      ## viceversa
-      S = as.matrix(S)
-      S[upper.tri(S, diag = TRUE)] = 0
-      S = Matrix(S, sparse = TRUE)
+
+    ## Recurrence-rate denominator selection (rr_denom):
+    ##
+    ## The literature does not settle on a single convention for the RR
+    ## denominator when a Theiler window or one-sided mask is applied.
+    ## Both choices below appear in published RQA software and analyses:
+    ##
+    ##   "full"  (= behaviour of crqa <= 2.0.7, of the original Marwan
+    ##            (2007) Phys. Rep. 438 definition  RR = (1/N^2) Sum R_ij,
+    ##            and of the TOCSY MATLAB toolbox): the denominator is
+    ##            v1l * v2l (all cells), regardless of how many were
+    ##            blanked by the Theiler window or the side mask. Those
+    ##            blanked cells contribute 0 to the numerator, so RR is
+    ##            "diluted" by the exclusion. Useful for reproducing
+    ##            published numbers and for apples-to-apples comparison
+    ##            with other tools that use this convention.
+    ##
+    ##   "valid" (= new default in v2.1.0; introduced by pjbruna's
+    ##            community PR; generalised here to rectangular RPs via
+    ##            theiler_exclusion(v1l, v2l, tw)): the denominator counts
+    ##            only the cells that survived the Theiler band and the
+    ##            side mask. RR thus reflects the fraction of *analysable*
+    ##            cell pairs that are recurrent. Internally consistent
+    ##            with how DET/ENTR are already computed in crqa() (their
+    ##            denominator is numrecurs, the post-Theiler count of
+    ##            recurrent points, not v1l*v2l).
+    ##
+    ## For tw == 0 and side == "both", both conventions give the same
+    ## value. The choice only matters when tw > 0 or side != "both". We
+    ## default to "valid" because it is internally consistent with the
+    ## DET/ENTR denominators, but the option is provided to recover
+    ## historical numbers exactly: pass rr_denom = "full".
+
+    ## Cast to double before multiplication: v1l * v2l overflows int when
+    ## v1l*v2l > .Machine$integer.max ~ 2.1e9, i.e. around N >= 46341 for
+    ## square RPs.  Without this, RR becomes NA at large N (silent until
+    ## downstream code does an `if (region > 0)` test and errors with
+    ## "missing value where TRUE/FALSE needed").
+    v1l_d <- as.double(v1l)
+    v2l_d <- as.double(v2l)
+    if (rr_denom == "full") {
+      region = v1l_d * v2l_d
+    } else if (side == "both") {
+      region = v1l_d * v2l_d - as.double(theiler_exclusion(v1l, v2l, tw))
+    } else {
+      ## "upper": keep cells with j - i >= max(tw, 1);  "lower": i - j >= max(tw, 1)
+      min_d = max(as.integer(tw), 1L)
+      if (side == "upper") {
+        if (min_d > v2l - 1L) {
+          region = 0
+        } else {
+          d_vals = seq.int(min_d, v2l - 1L)
+          region = sum(as.double(pmin(v1l, v2l - d_vals)))
+        }
+      } else { ## "lower"
+        if (min_d > v1l - 1L) {
+          region = 0
+        } else {
+          d_vals = seq.int(min_d, v1l - 1L)
+          region = sum(as.double(pmin(v2l, v1l - d_vals)))
+        }
+      }
     }
-    
-    if (side == "both"){
-      ## just keep it as is.
-      S = S}
-    
-    spdiagonalize = spdiags(S) ##  spdiags should have decent speed 
-    B = spdiagonalize$B
-    
-    ##calculate percentage recurrence by taking all non-zeros
-    
-    numrecurs = length(which(B == TRUE));
-    percentrecurs = (numrecurs/((v1l*v2l)))*100;
-    
-    ####################################################################
-    ####################################################################
-    
-    ## Computing the line counts
-    
-    ## This section finds the index of the zeros in the matrix B,
-    ## which contains the diagonals of one triangle of the
-    ## recurrence matrix (the identity line excluded).
-    
-    ## The find command indexes the matrix sequentially
-    ## from 1 to the total number of elements.
-    ## The element numbers for a 2X2 matrix would be [1 3; 2 4].
-    ## You get a hit for every zero. If you take the difference
-    ## of the resulting vector, minus 1, it yields the length of an
-    ## interceding vector of ones, a line. Here is an e.g.
-    ## using a row vector rather than a col. vector, since it types
-    ## easier: B=[0 1 1 1 0], a line of length 3.
-    ## find( B == 0 ) yields [1 5], diff( [1 5] ) -1 = 3,
-    ## the line length.
-    ## So this solution finds line lengths in the interior of
-    ## the B matrix, BUT fails if a line butts up against either
-    ## edge of the B matrix, e.g. say  B = [0 1 1 1 1],
-    ## which( B == 0) returns a 1, and you miss the line of length 4.
-    ## A solution is to "bracket" B with a row of zeros at each
-    ## top and bottom.
-    
-    ## Bracket B with zeros
-    if (is.vector(B)) {
-      false = rep(FALSE, length(B)) ##cases where B is a vector
-      B = rbind(false, B, false, deparse.level = 0)
-    } else  {
-      false = rep(FALSE, ncol(B))
-      B = as.matrix(B)
-      ## need to transform the sparseMat into normal to bracket it
-      B = rbind(false, B, false, deparse.level = 0)
-    }
-    
-    ## Get list of line lengths, sorted from largest to smallest
-    diaglines = sort( diff(which(B == FALSE) ) -1, decreasing = TRUE)
-    
-    ## Delete line counts less than the minimum diagonal.
-    diaglines = diaglines[diaglines >= mindiagline]
-    ## diaglines(diaglines>200)=[]; # Can define a maximum line length too.
-    
-    ## exlude the rare cases where there are no diaglines
-    
-    if(length(diaglines) != 0){
-      
-      numdiaglines = length(diaglines) ## extract the length of diag
+
+    percentrecurs = if (region > 0) (numrecurs / region) * 100 else NA_real_
+
+    ## exclude the rare cases where there are no diaglines
+    if (length(diaglines) != 0) {
+
+      numdiaglines = length(diaglines)
       maxline = max(diaglines)
       meanline = mean(diaglines)
-      
+
       tabled = as.data.frame(table(diaglines))
-      
-      total = sum(tabled$Freq)       
+
+      total = sum(tabled$Freq)
       p = tabled$Freq/total
-      
-      ##remove zero probability..it should not be necessary
-      del = which(p == 0 )
+
+      ## remove zero probability..it should not be necessary
+      del = which(p == 0)
       if (length(del) > 0) {
         p = p[-del]
       }
-      
+
       ## entropy log2, and relative entropy divided by max
-      entropy = - sum(p*log(p))    
+      entropy = - sum(p*log(p))
       relEntropy = entropy/(-1*log(1/nrow(tabled)))
-      
+
       ## entropy/max entropy: comparable across contexts and conditions.
-      
+
       pdeter = sum(diaglines)/numrecurs*100
-      ## percent determinism: the predictability of the dynamical system 
-      
-      ## calculate laminarity and trapping time
-      restt = tt(S, minvertline, whiteline)            
-      lam = restt$lam; TT = restt$TT; max_vertlength = restt$max_vertlength
-      
+      ## percent determinism: the predictability of the dynamical system
+
+      ## laminarity, trapping time, max vertical line — from line_stats()
+      lam = ls_out$lam
+      TT  = ls_out$TT
+      max_vertlength = ls_out$max_vertlength
+
       ## let's calculate categorical entropy
-      if (side == 'both' & datatype == 'categorical' & radius <= .1){ 
+      if (side == 'both' & datatype == 'categorical' & radius <= .1){
         ## we need a full RP and data has to be categorical
-        ## we need to input directly the indeces of the 
+        ## we need to input directly the indeces of the
         ## recurrence plot and the size of the matrix
         size   = dim(S)
         catH   = catEnt(ind, size)
       } else {
         catH = NA
       }
-      
+
     } else {
-      
+
       numdiaglines = 0; maxline = 0; pdeter = NA;
       entropy = NA; relEntropy = NA; meanline = 0
-      lam = 0; TT = 0; catH = NA; max_vertlength = NA; 
-      RP = NA; 
+      lam = 0; TT = 0; catH = NA; max_vertlength = NA;
+      RP = NA;
     }
     
-    results = list(RR = percentrecurs, DET = pdeter, 
-                   NRLINE = numdiaglines, maxL = maxline, 
-                   L = meanline, ENTR = entropy, 
+    ## white-line outputs are NA unless whiteline=TRUE was requested.
+    ## Three measures are returned:
+    ##   wmean = mean white vertical line length
+    ##           = approximate mean inter-recurrence time
+    ##   wmax  = longest white vertical line
+    ##   wENTR = Shannon entropy of the white-line length distribution
+    ##           = recurrence-time entropy (RTE), Faure & Korn 2004
+    ##           Phys. Lett. A 332:329-339; Little, McSharry, Roberts,
+    ##           Costello & Moroz 2007 Biomed. Eng. Online 6:23.
+    if (exists("ls_out") && isTRUE(whiteline)) {
+      wmean <- ls_out$wmean; wmax <- ls_out$wmax; wENTR <- ls_out$wENTR
+    } else {
+      wmean <- NA_real_; wmax <- NA_real_; wENTR <- NA_real_
+    }
+
+    results = list(RR = percentrecurs, DET = pdeter,
+                   NRLINE = numdiaglines, maxL = maxline,
+                   L = meanline, ENTR = entropy,
                    rENTR = relEntropy,
-                   LAM = lam, TT = TT, catH = catH, 
-                   max_vertlength = max_vertlength, RP = S)
-    
+                   LAM = lam, TT = TT, catH = catH,
+                   max_vertlength = max_vertlength,
+                   wmean = wmean, wmax = wmax, wENTR = wENTR,
+                   RP = S)
+
   } else { # print (paste ("No recurrence found") )
     results = list(RR = 0, DET = NA, NRLINE = 0,
                    maxL = 0, L = 0, ENTR = NA, rENTR = NA,
-                   LAM = NA, TT = NA, catH = NA, 
-                   max_vertlength = NA, RP = NA)}  
+                   LAM = NA, TT = NA, catH = NA,
+                   max_vertlength = NA,
+                   wmean = NA, wmax = NA, wENTR = NA,
+                   RP = NA)}  
   
   return (results)
   

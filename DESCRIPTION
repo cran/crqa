@@ -2,8 +2,10 @@ Package: crqa
 Type: Package
 Title: Unidimensional and Multidimensional Methods for Recurrence
         Quantification Analysis
-Version: 2.0.7
-Date: 2025-06-25
+Version: 2.1.0
+Date: 2026-05-13
+URL: https://github.com/morenococo/crqa
+BugReports: https://github.com/morenococo/crqa/issues
 Authors@R: c(
     person("Moreno  I.", "Coco", role = c("cre","aut"), 
     email="moreno.cocoi@gmail.com"),
@@ -20,7 +22,9 @@ Authors@R: c(
     person("John  C.","Nash", role = "ctb",
     email = "nashjc@uottawa.ca"),
     person("Alexandra","Paxton", role = "ctb",
-    email = "alexandra.paxton@uconn.edu")
+    email = "alexandra.paxton@uconn.edu"),
+    person("Polyphony", "Bruna", role = "ctb",
+    email = "pbruna@ucmerced.edu") 
     )
 Maintainer: Moreno I. Coco <moreno.cocoi@gmail.com>
 Description: 
@@ -34,18 +38,22 @@ Description:
     and Wallot (2018) <doi: 10.1080/00273171.2018.1512846>
     for further details about the method.
 Depends: R (>= 3.5.0)
-Imports: Matrix, pracma, rdist, tseriesChaos, gplots, dplyr, ggplot2
+Imports: methods, Matrix, pracma, rdist, tseriesChaos, gplots, dplyr,
+        ggplot2, future, furrr, Rcpp (>= 1.0.0)
+LinkingTo: Rcpp
+SystemRequirements: GNU make
 License: GPL (>= 3)
-Collate: 'crqa.R' 'crqa_helpers.R' 'drpfromts.R' 'lorenzattractor.R'
-        'mdDelay.R' 'mdFnn.R' 'optimizeParam.R' 'piecewiseRQA.R'
-        'plot_rp.R' 'simts.R' 'spdiags.R' 'wincrqa.R' 'windowdrp.R'
-RoxygenNote: 7.3.2
+Collate: 'RcppExports.R' 'aRQA.R' 'crqa.R' 'crqa_helpers.R'
+        'drpfromts.R' 'lorenzattractor.R' 'mdDelay.R' 'mdFnn.R'
+        'optimizeParam.R' 'piecewiseRQA.R' 'plot_rp.R'
+        'rosslerattractor.R' 'simts.R' 'spdiags.R' 'wincrqa.R'
+        'windowdrp.R'
 LazyData: true
 VignetteBuilder: knitr
 Encoding: UTF-8
 Suggests: knitr, rmarkdown
 NeedsCompilation: yes
-Packaged: 2025-06-25 09:46:08 UTC; moreno
+Packaged: 2026-05-26 07:12:52 UTC; moreno
 Author: Moreno I. Coco [cre, aut],
   Dan Mønster [aut],
   Giuseppe Leonardi [aut],
@@ -53,6 +61,7 @@ Author: Moreno I. Coco [cre, aut],
   Sebastian Wallot [aut],
   James D. Dixon [ctb],
   John C. Nash [ctb],
-  Alexandra Paxton [ctb]
+  Alexandra Paxton [ctb],
+  Polyphony Bruna [ctb]
 Repository: CRAN
-Date/Publication: 2025-06-25 10:10:01 UTC
+Date/Publication: 2026-05-26 08:10:02 UTC

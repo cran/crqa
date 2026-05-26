@@ -13,9 +13,13 @@
 
 \usage{
 
-wincrqa(ts1, ts2, windowstep, windowsize, delay, embed, 
-radius, rescale, normalize, mindiagline, minvertline, tw, whiteline, 
-recpt, side, method, metric, datatype, trend)
+wincrqa(ts1, ts2, windowstep, windowsize, delay, embed,
+radius = 0.001, rescale = 0, normalize = 0,
+mindiagline = 2, minvertline = 2,
+tw = 0, whiteline = FALSE, recpt = FALSE, side = "both",
+method = "crqa", metric = "euclidean", datatype = "continuous",
+trend = FALSE, workers = 1L,
+rr_denom = "full")
 
 }
 
@@ -40,7 +44,10 @@ recpt, side, method, metric, datatype, trend)
   \item{normalize}{Normalize the time-series;
     if normalize = 0 (do nothing);
     if normalize = 1 (Unit interval);
-    if normalize =  2 (z-score).}
+    if normalize =  2 (z-score).
+    Since v2.1.0, normalization is applied once to the \emph{full} series
+    before windowing, so all windows share the same scale.
+    In earlier versions it was applied independently per window.}
   \item{mindiagline}{A minimum diagonal length of
     recurrent points. Usually set to 2, as it takes
     a minimum of two points to define any line.}
@@ -65,9 +72,34 @@ recpt, side, method, metric, datatype, trend)
   see help rdist() to list all other possible metrics.} 
 \item{datatype}{a string (continuous or categorical) 
   to indicate whether the nature of the data type}
-\item{trend}{a boolean (TRUE or FALSE) 
+\item{trend}{a boolean (TRUE or FALSE)
   to indicate whether the TREND should be computed of the
   system}
+\item{workers}{Integer; number of parallel workers (default 1 =
+  serial). Set greater than 1 to dispatch the per-window
+  \code{crqa()} calls via \pkg{future} + \pkg{furrr}. Note: spawning
+  workers has a fixed startup cost of a few seconds; parallel
+  execution only pays off when individual windows are themselves
+  expensive (large \code{N} per window or many windows). For typical
+  exploratory use (short series, modest number of windows) the
+  serial default is faster. New in v2.1.0.
+
+  \strong{Interaction with OpenMP.} Since v2.1.0 the fused C++
+  kernel inside \code{crqa()} is itself OpenMP-parallel and by
+  default uses all available cores. Combining \code{workers > 1}
+  with the default OpenMP setting can over-subscribe the CPU
+  (e.g. \code{workers = 4} on a 4-core machine would spawn up to
+  16 threads). When using \code{workers > 1}, set
+  \code{OMP_NUM_THREADS=1} in the shell environment BEFORE
+  launching R, so each worker uses a single OpenMP thread and
+  the parallelism comes entirely from \code{workers}.
+  \code{Sys.setenv()} from inside R is too late: libgomp caches
+  the thread count at first parallel region.}
+\item{rr_denom}{Forwarded to \code{\link{crqa}}; choice of
+  recurrence-rate denominator. \code{"full"} (default) uses all
+  \code{N1 * N2} cells and reproduces the historical convention;
+  \code{"valid"} excludes Theiler/side-blanked cells from the
+  denominator. New in v2.1.0; see \code{\link{crqa}} for details.}
 
 }
 
@@ -108,18 +140,15 @@ Alexandra Paxton \email{alexandra.paxton@uconn.edu}}
 
 data(crqa) 
 
-listener = eyemovement$listener[1:200]
-narrator = eyemovement$narrator[1:200]
-
-# NB, the parameters for windowsize and windowstep are large to allow
-# faster running time, please set them carefully in your analysis. 
+listener = eyemovement$listener
+narrator = eyemovement$narrator
 
 delay = 1; embed = 1; rescale = 0; radius = 0.001;
 normalize = 0; mindiagline = 2; minvertline = 2;
 tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-method = 'crqa'; metric = 'euclidean';  
-datatype = "continuous"; 
-windowsize =  100; windowstep = 50
+method = 'crqa'; metric = 'euclidean';
+datatype = "continuous";
+windowsize = 200; windowstep = 100
 trend = FALSE
 
 ans = wincrqa(listener, narrator, windowstep, windowsize, delay, embed,

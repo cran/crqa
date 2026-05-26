@@ -1,148 +1,472 @@
 ---
-title: "Unidimensional and Multidimensional Methods for Recurrence Quantification Analysis with crqa()"
-output: html_vignette
+title: "Recurrence Quantification Analysis with crqa — a guided tour of v2.1.0"
+output:
+  html_vignette:
+    toc: true
+    toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{Unidimensional and Multidimensional Methods for Recurrence Quantification Analysis with crqa()}
+  %\VignetteIndexEntry{Recurrence Quantification Analysis with crqa — a guided tour of v2.1.0}
   %\VignetteEngine{knitr::rmarkdown}
-  %\usepackage[UTF-8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+  collapse  = TRUE,
+  comment   = "#>",
+  eval      = TRUE
 )
-
-knitr::knit_hooks$set(time_it = local({
-  now <- NULL
-  function(before, options) {
-    if (before) {
-      # record the current time before each chunk
-      now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
-      res <- difftime(Sys.time(), now, units = "secs")
-      # return a character string to show the time
-      paste("Time for the chunk", options$label, "to run:", res)
-      
-    }
-  }
-}))
-
-knitr::opts_chunk$set(time_it = TRUE)
-
+library(crqa)
 ```
 
-The crqa, R package, allows users to conduct a wide range of recurrence-based analyses on single (e.g., auto-recurrence) and multivariate time series (e.g., multidimensional cross-recurrence quantification), examine coupling properties underlying leader-follower relationships (i.e., diagonal-profile methods), as well as, track the evolution of recurrence rate over the time course (i.e., windowed methods). 
+## Overview
+
+`crqa` (Coco & Dale 2014; Coco et al. 2021) is the primary R package for
+**recurrence quantification analysis (RQA)** on behavioural, physiological,
+and linguistic time series. It provides:
+
+- Auto-recurrence (`method = "rqa"`), cross-recurrence (`"crqa"`), and
+  multidimensional cross-recurrence (`"mdcrqa"`) with the full set of
+  standard RQA measures.
+- Diagonal recurrence profiles (`drpfromts`) for leader–follower analysis.
+- Windowed and piecewise analyses (`wincrqa`, `windowdrp`, `piecewiseRQA`).
+- Parameter optimisation (`optimizeParam`).
+- Visualisation (`plot_rp`).
+
+### Performance in context (v2.1.0)
+
+Version 2.1.0 replaces the legacy `spdiags`-based pipeline with a
+**fused** Rcpp inner loop — meaning distance computation, threshold
+comparison, and line-statistic collection are merged into a single
+pass that never materialises the N×N distance matrix — and adds OpenMP
+parallelism on top. Figure 1 plots wall time vs. N on the
+Rössler-system benchmark of Marwan & Kraemer (2023), the standard
+reference for RQA package comparisons (m = 3, τ = 6, Euclidean norm,
+dense ~2 % recurrence).
+
+```{r benchmark-fig, echo = FALSE, out.width = "100%", fig.cap = "Figure 1. Wall time per call for crqa v2.1.0 vs. other RQA implementations on the Rössler-system benchmark (Marwan & Kraemer 2023). Filled markers: measured on this hardware (4-core Ryzen-class CPU). Open markers: reference levels from Marwan & Kraemer 2023 Fig 3A. crqa v2.1.0 uses the fused C++ kernel with OpenMP enabled (default); thread count = all available cores. AccRQA 1.0.1 (Adámek et al. 2026) measured single-threaded — their library also offers OpenMP and CUDA paths not benchmarked here. The aRQA path is a fundamentally different algorithm (phase-space histogram) with O(N) memory and scales to N = 200 000 in seconds."}
+knitr::include_graphics("figure3_speed_memory.png")
+```
+
+The figure summarises crqa's competitive position:
+
+- **`crqa v2.0.7 (legacy)`** scales as O(N²) in both time and memory
+  and runs out of memory at N ≈ 12 k on typical hardware.
+- **`crqa v2.1.0 (fused + OpenMP)`** — the current release — is 5–15×
+  faster than v2.0.7 and comparable to pyunicorn (Cython, Python) on
+  CPU. The fused C++ kernel parallelises the distance-and-threshold
+  loop via OpenMP (default: all available cores). At moderate N the
+  OpenMP gain over serial is ~1.3–1.9× on 4 cores; typical sparser
+  analyses (RR ≲ 0.5 %) approach near-linear scaling with cores.
+- **`crqa v2.1.0 (method = "aRQA")`** is part of this package and
+  scales to N = 200 000 in seconds with O(N) memory — a regime where
+  all exact O(N²) methods run out of memory.
+- **AccRQA 1.0.1 (CPU, Adámek et al. 2026)** is a high-performance
+  C/C++ library with R, Python, and C/C++ bindings that uses novel
+  OpenMP and CUDA algorithms. Measured single-threaded on this
+  hardware it is ~3–6× faster than crqa v2.1.0 on this auto-RQA
+  benchmark. It is worth noting that the AccRQA paper (Adámek et al.
+  2026) benchmarked against crqa ≤ 2.0.7 (the legacy O(N²) path);
+  crqa v2.1.0's fused kernel substantially narrows that gap. AccRQA
+  does not implement cross-recurrence (CRQA), multidimensional
+  (mdcrqa), windowed analysis, categorical data, Theiler windows,
+  parameter optimisation, or visualisation, which remain exclusive
+  to crqa.
+
+The two libraries are complementary: AccRQA is a GPU-aware kernel
+library for vanilla auto-RQA on long single time series; crqa is the
+R-native analytical toolbox for the full range of recurrence analyses
+used in behavioural, cognitive and linguistic research.
+
+By default, crqa uses **all available CPU cores** transparently — you
+do not need to configure anything. The only situation in which this
+matters is if you are running many `crqa()` calls in parallel yourself
+(for example via the `workers` argument of `wincrqa()`), in which case
+see the "Parallelism: advanced control" section below.
+
+---
 
 ## Installation
 
-``` r
-# You can install the latest version of crqa on CRAN by running:
-install.packages("crqa")
-
-# Or for the development version from GitHub:
-# install.packages("devtools")
-devtools::install_github("morenococo/crqa")
+```{r install, eval = FALSE}
+install.packages("crqa")          # CRAN release
+# devtools::install_github("morenococo/crqa")  # development version
 ```
 
-# Usage
+---
 
-crqa comes with some data that can be used to test and study the different functions therein. 
+## Core concepts and the `crqa()` function
 
-``` r
-data(crqa) # load the data 
+All analyses go through `crqa()` or one of its wrappers. The key arguments:
+
+| Argument | Role | Default |
+|---|---|---|
+| `ts1`, `ts2` | Time series (vectors or matrices) | — |
+| `delay` | Embedding delay τ | 1 |
+| `embed` | Embedding dimension m | 1 |
+| `radius` | Recurrence threshold ε | 0.001 |
+| `rescale` | Rescale distance matrix (0–4) | 0 |
+| `normalize` | Normalize series (0 = none, 1 = unit, 2 = z) | 0 |
+| `tw` | Theiler window | 0 |
+| `mindiagline` | Min diagonal-line length | 2 |
+| `minvertline` | Min vertical-line length | 2 |
+| `side` | `"both"`, `"upper"`, or `"lower"` | `"both"` |
+| `method` | `"rqa"`, `"crqa"`, `"mdcrqa"`, `"aRQA"` | `"rqa"` |
+| `whiteline` | Compute white-line statistics? | `FALSE` |
+| `rr_denom` | RR denominator: `"full"` (v2.0.7 compat.) or `"valid"` | `"full"` |
+| `workers` | Parallel workers (wrappers only) | 1 |
+
+### Return value
+
+`crqa()` returns a named list:
+
+- `RR` — recurrence rate (%)
+- `DET` — determinism (%)
+- `NRLINE` — number of diagonal lines ≥ `mindiagline`
+- `maxL` — longest diagonal line
+- `L` — mean diagonal-line length
+- `ENTR` — entropy of the diagonal-line length distribution
+- `rENTR` — normalised entropy
+- `LAM` — laminarity (%)
+- `TT` — trapping time (mean vertical-line length)
+- `max_vertlength` — longest vertical line
+- `wmean`, `wmax`, `wENTR` — white-line stats (if `whiteline = TRUE`)
+- `RP` — the recurrence plot as a sparse matrix (`Matrix` class)
+
+---
+
+## Example 1 — Auto-recurrence on categorical data
+
+A nursery rhyme ("The Wheels on the Bus") encoded as a word vector.
+With categorical data set `radius` small so only identical tokens recur.
+
+```{r rqa-cat}
+data(crqa)
+
+ans_rqa <- crqa(text, text,
+                delay = 1, embed = 1, rescale = 0, radius = 0.0001,
+                normalize = 0, mindiagline = 2, minvertline = 2,
+                tw = 1, whiteline = FALSE, recpt = FALSE,
+                side = "both", method = "rqa",
+                metric = "euclidean", datatype = "categorical")
+
+# Print all scalar measures (exclude the RP itself)
+print(ans_rqa[!names(ans_rqa) %in% "RP"])
 ```
 
-## RQA on a categorical time-series (auto-recurrence)
+### Visualising the recurrence plot
 
-First, specify the arguments that will be used in the crqa, core function.
-
-``` r
-## parameter setting 
-delay = 1; embed = 1; rescale = 0; radius = 0.0001;
-normalize = 0; mindiagline = 2; minvertline = 2;
-tw = 1; whiteline = FALSE; recpt = FALSE; 
-side = "both"; method = 'rqa'; metric = 'euclidean';  
-datatype = "categorical"
+```{r rqa-plot, fig.width = 5, fig.height = 5, out.width = "60%"}
+plot_rp(ans_rqa$RP,
+        title = "Auto-RP: Wheels on the Bus",
+        xlabel = "Word index", ylabel = "Word index")
 ```
 
-Then, run crqa on a nursery rhyme “The wheels on the bus” by Verna Hills: a vector of 120 strings (i.e., the words of the song),
+---
 
-``` r
-ans = crqa(text, text, delay, embed, rescale, radius, normalize, 
-           mindiagline, minvertline, tw, whiteline, recpt, side, method, metric, 
-           datatype)
-```
+## Example 2 — Cross-recurrence on categorical data
 
-Have a look at the output, which contains different measures extracted from the recurrence plot (RP), and the RP itself, which can be plotted using the plotRP function. 
+Eye-tracking data: narrator and listener looking at six screen locations
+during a joint description task. Cross-recurrence quantifies how temporally
+coupled their gaze patterns are.
 
-``` r
-str(ans)
-```
-## CRQA on a categorical time-series (cross-recurrence)
+```{r crqa-cat}
+listener <- eyemovement$listener
+narrator <- eyemovement$narrator
 
-Cross-recurrence extends univariate recurrence analysis into a bivariate analysis that allows quantification of the temporal coupling properties of two time series. We use eye-tracking data, 2,000 observations of six possible screen locations that are looked at by a dyad engaged into a joint task.  
-
-``` r
-listener = eyemovement$listener[1:500]
-narrator = eyemovement$narrator[1:500]
-
-delay = 1; embed = 1; rescale = 0; radius = .01;
-normalize = 0; mindiagline = 2; minvertline = 2;
-tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-method = 'crqa'; metric = 'euclidean';  
-datatype = "categorical"
-
-ans = crqa(narrator, listener, delay, embed, rescale, radius, normalize, 
-           mindiagline, minvertline, tw, whiteline, recpt, side, method, metric, 
-           datatype)
-```
-
-### Diagonal cross-recurrence profile. 
-
-From cross-recurrence plots is possible to extract the diagonal cross-recurrence profiles (DCRPs) and use them to capture leader-follower-relationships. 
-
-``` r
-timecourse = round( seq(-3300,3300,33)/1000, digit = 2)  ## construct the time-course for the diagonal profile
-
-res = drpfromts(narrator, listener, windowsize = 100,
-                 radius = 0.001, delay = 1, embed = 1, rescale = 0,
+ans_crqa <- crqa(narrator, listener,
+                 delay = 1, embed = 1, rescale = 0, radius = 0.01,
                  normalize = 0, mindiagline = 2, minvertline = 2,
-                 tw = 0, whiteline = F, recpt = F, side = 'both', 
-                 method = 'crqa', metric = 'euclidean', 
-                 datatype = 'continuous')
-                 
- ## visualise the diagonal-profile
- profile = res$profile*100 ## extract it from the res object
- 
-plot(timecourse, profile, type = "l", lwd = 2.5, xlab = "Lag (seconds)",
-     ylab = "Recurrence Rate %")                 
+                 tw = 0, whiteline = FALSE, recpt = FALSE,
+                 side = "both", method = "crqa",
+                 metric = "euclidean", datatype = "categorical")
+
+cat(sprintf("RR = %.2f%%   DET = %.2f%%   LAM = %.2f%%\n",
+            ans_crqa$RR, ans_crqa$DET, ans_crqa$LAM))
 ```
 
-## Multidimensional cross-recurrence quantification analysis
+### White-line statistics (new in v2.1.0)
 
-Multidimensional cross-recurrence quantification analysis allows for the computation of cross-recurrences between two multidimensional time-series. We use hand-movement data from a complex LEGO joint construction task. The dataframe comprises of 5,799 observations.
+White vertical lines are gaps between recurrent stretches in the same
+column. Their distribution approximates the inter-recurrence time
+distribution; `wENTR` is the recurrence-time entropy (Faure & Korn 2004).
+Enabling `whiteline = TRUE` costs essentially nothing — the scan runs in
+the same sparse-index pass as the black-line statistics.
 
-``` r
-# reduce the dimensionality of the time series to make the computation faster
-# handset = handmovement[1:3000, ]
-handset = handmovement[1:500, ]
+```{r whiteline}
+ans_wl <- crqa(narrator, narrator,
+               delay = 1, embed = 1, rescale = 0, radius = 0.001,
+               normalize = 0, mindiagline = 2, minvertline = 2,
+               tw = 0, whiteline = TRUE, recpt = FALSE,
+               side = "both", method = "rqa",
+               metric = "euclidean", datatype = "categorical")
 
-P1 = cbind(handset$P1_TT_d, handset$P1_TT_n) 
-P2 = cbind(handset$P2_TT_d, handset$P2_TT_n)
-
-delay = 5; embed = 2; rescale = 0; radius = .1;
-normalize = 0; mindiagline = 10; minvertline = 10;
-tw = 0; whiteline = FALSE; recpt = FALSE; side = "both"
-method = 'mdcrqa'; metric = 'euclidean';  
-datatype = "continuous"
-
-ans = crqa(P1, P2, delay, embed, rescale, radius, normalize, 
-           mindiagline, minvertline, tw, whiteline, recpt, side, method, metric, 
-           datatype)
-
-RP = ans$RP
-results = unlist(ans[1:10])
-print(results)
+cat(sprintf("wmean = %.2f   wmax = %d   wENTR = %.3f\n",
+            ans_wl$wmean, ans_wl$wmax, ans_wl$wENTR))
 ```
+
+---
+
+## Example 3 — Multidimensional cross-recurrence (mdCRQA)
+
+Hand-movement data from a joint LEGO construction task: two participants'
+wrist positions in two spatial dimensions.
+
+```{r mdcrqa}
+
+P1 <- cbind(handmovement$P1_TT_d, handmovement$P1_TT_n)
+P2 <- cbind(handmovement$P2_TT_d, handmovement$P2_TT_n)
+
+ans_md <- crqa(P1, P2,
+               delay = 5, embed = 2, rescale = 0, radius = 0.3,
+               normalize = 0, mindiagline = 2, minvertline = 2,
+               tw = 0, whiteline = FALSE, recpt = FALSE,
+               side = "both", method = "mdcrqa",
+               metric = "euclidean", datatype = "continuous")
+
+cat(sprintf("RR = %.2f%%   DET = %.2f%%   LAM = %.2f%%\n",
+            ans_md$RR, ans_md$DET, ans_md$LAM))
+```
+
+---
+
+## Example 4 — Diagonal recurrence profile (leader–follower)
+
+`drpfromts()` extracts the diagonal cross-recurrence profile: for each
+lag δ, it reports the mean recurrence along the diagonal at that offset.
+The peak lag identifies the temporal lead of one series over the other.
+
+```{r drp, fig.width = 6, fig.height = 4, out.width = "75%"}
+res <- drpfromts(narrator, listener,
+                 windowsize = 100,
+                 radius = 0.001, delay = 1, embed = 1,
+                 rescale = 0, normalize = 0,
+                 mindiagline = 2, minvertline = 2,
+                 tw = 0, whiteline = FALSE, recpt = FALSE,
+                 side = "both", method = "crqa",
+                 metric = "euclidean", datatype = "categorical")
+
+timecourse <- seq_along(res$profile) - ceiling(length(res$profile) / 2)
+plot(timecourse, res$profile * 100,
+     type = "l", lwd = 2,
+     xlab = "Lag (samples)", ylab = "Recurrence rate (%)",
+     main = "Diagonal cross-recurrence profile")
+abline(v = res$maxlag - ceiling(length(res$profile) / 2),
+       col = "red", lty = 2)
+```
+
+---
+
+## Example 5 — Windowed RQA (time-varying dynamics)
+
+`wincrqa()` slides a window over the time series and returns one row of
+RQA measures per window — useful for tracking how coupling evolves.
+
+```{r wincrqa, fig.width = 6, fig.height = 4, out.width = "75%"}
+win_res <- wincrqa(narrator, listener,
+                   windowstep = 20, windowsize = 80,
+                   delay = 1, embed = 1,
+                   radius = 0.001, rescale = 0, normalize = 0,
+                   mindiagline = 2, minvertline = 2,
+                   tw = 0, whiteline = FALSE, recpt = FALSE,
+                   side = "both", method = "crqa",
+                   metric = "euclidean", datatype = "categorical",
+                   trend = FALSE, workers = 1L)
+
+plot(win_res$win, win_res$RR,
+     type = "l", lwd = 2,
+     xlab = "Window", ylab = "RR (%)",
+     main = "Windowed RR (narrator-listener gaze coupling)")
+```
+
+For very long series with many windows, parallel execution is
+available via `workers > 1`:
+
+```{r wincrqa-parallel, eval = FALSE}
+win_par <- wincrqa(narrator, listener,
+                   windowstep = 20, windowsize = 80,
+                   delay = 1, embed = 1, radius = 0.001,
+                   workers = 4L)   # spread windows across 4 CPU cores
+```
+
+Worker spawn has a fixed overhead of a few seconds; use `workers > 1`
+only when individual windows are themselves expensive (long series or
+many windows). See the "Parallelism: advanced control" section below
+for the one configuration step needed when combining `workers > 1`
+with crqa's built-in OpenMP parallelism.
+
+---
+
+## Example 6 — Approximative RQA for very long series (new in v2.1.0)
+
+For N > ~10 000, the exact methods run out of memory (O(N²) peak RAM).
+`method = "aRQA"` implements the phase-space histogram approach of
+Schultz, Spiegel, Marwan & Albayrak (2015, *Phys. Lett. A* 379:997)
+and runs in O(N) memory. The method was developed and validated in the
+literature for **auto-recurrence** on a single series (see example
+below); the implementation also accepts two distinct series
+(cross-RQA) and matrix inputs (multidimensional), but the
+approximation has only been benchmarked for the auto-RQA case.
+It is available directly via `crqa()`:
+
+```{r arqa}
+# Simulate 5000 points of AR(1) data as a stand-in for a long series
+set.seed(42)
+x <- as.numeric(arima.sim(model = list(ar = 0.7), n = 5000))
+
+res_arqa <- crqa(x, x,
+                 delay = 1, embed = 3, radius = 0.5,
+                 normalize = 2, mindiagline = 2,
+                 method = "aRQA")
+
+cat(sprintf("aRQA:  RR = %.3f%%   DET = %.2f%%   L = %.2f\n",
+            res_arqa$RR, res_arqa$DET, res_arqa$L))
+```
+
+**When to use aRQA:** for stochastic or weakly-deterministic data with
+N > 10 000 where exact computation is infeasible. The approximation error
+on DET is a few percentage points for stochastic data and larger for
+strongly deterministic systems (see the help page `?aRQA` for details).
+For comparison at moderate N:
+
+```{r arqa-compare, eval = FALSE}
+# Exact crqa for the same series at N = 1000 (comparable parameter set)
+x_short <- x[1:1000]
+
+res_exact <- crqa(x_short, x_short,
+                  delay = 1, embed = 3, radius = 0.5,
+                  normalize = 2, mindiagline = 2,
+                  method = "rqa")
+
+res_approx <- crqa(x_short, x_short,
+                   delay = 1, embed = 3, radius = 0.5,
+                   normalize = 2, mindiagline = 2,
+                   method = "aRQA")
+
+cat(sprintf("Exact:  RR = %.3f%%  DET = %.2f%%\n", res_exact$RR,  res_exact$DET))
+cat(sprintf("aRQA:   RR = %.3f%%  DET = %.2f%%\n", res_approx$RR, res_approx$DET))
+```
+
+---
+
+## Example 7 — Parameter optimisation
+
+`optimizeParam()` uses average mutual information (AMI) for delay,
+false nearest neighbours (FNN) for embedding dimension, and binary
+search for the radius that yields a target recurrence rate.
+
+```{r optim, eval = FALSE}
+data(crqa)
+
+P1 <- cbind(handmovement$P1_TT_d, handmovement$P1_TT_n)
+P2 <- cbind(handmovement$P2_TT_d, handmovement$P2_TT_n)
+
+par <- list(method = "mdcrqa", metric = "euclidean",
+            maxlag = 20, radiusspan = 100, normalize = 0,
+            rescale = 4, mindiagline = 10, minvertline = 10,
+            tw = 0, whiteline = FALSE, recpt = FALSE,
+            side = "both", datatype = "continuous",
+            fnnpercent = NA, typeami = NA,
+            nbins = 50, criterion = "firstBelow",
+            threshold = 1, maxEmb = 20, numSamples = 500,
+            Rtol = 10, Atol = 2)
+
+results <- optimizeParam(P1, P2, par, min.rec = 2, max.rec = 5)
+print(unlist(results))
+```
+
+---
+
+## Note on the `rr_denom` argument (v2.1.0)
+
+Version 2.1.0 introduces the `rr_denom` argument with two options:
+
+- `"full"` (default): the denominator is N×M regardless of blanking.
+  Reproduces the historical convention (Marwan et al. 2007,
+  *Phys. Rep.* 438:237) and the behaviour of crqa ≤ 2.0.7. This is
+  the default so that upgrading from v2.0.7 does not silently change
+  any user's results.
+- `"valid"`: the denominator counts only cells that survived the
+  Theiler window and side mask — the fraction of *analysable* pairs
+  that are recurrent. Internally consistent with how DET and ENTR are
+  computed. Recommended when reporting RR alongside DET/ENTR or when
+  comparing analyses that use different Theiler windows.
+
+When `tw == 0` and `side == "both"` (the most common case) both
+conventions give identical results.
+
+```{r rr-denom}
+r_valid <- crqa(narrator, listener,
+                delay = 1, embed = 1, rescale = 0, radius = 0.001,
+                normalize = 0, mindiagline = 2, minvertline = 2,
+                tw = 2, side = "both", method = "crqa",
+                metric = "euclidean", datatype = "categorical",
+                rr_denom = "valid")
+
+r_full <- crqa(narrator, listener,
+               delay = 1, embed = 1, rescale = 0, radius = 0.001,
+               normalize = 0, mindiagline = 2, minvertline = 2,
+               tw = 2, side = "both", method = "crqa",
+               metric = "euclidean", datatype = "categorical",
+               rr_denom = "full")
+
+cat(sprintf("rr_denom='valid': RR = %.4f%%\n", r_valid$RR))
+cat(sprintf("rr_denom='full':  RR = %.4f%%  (v2.0.7 convention)\n", r_full$RR))
+```
+
+---
+
+## Parallelism: advanced control
+
+Most users can ignore this section — by default, `crqa()` uses all
+available CPU cores and that is the right choice almost all the time.
+
+There is exactly **one** situation where you may need to take action:
+when you are spawning multiple R workers yourself (e.g. via
+`wincrqa(..., workers = 4)`) and each worker is also calling `crqa()`.
+In that case the inner OpenMP parallelism multiplies with the outer
+worker count and can overload the CPU. To avoid this, set
+`OMP_NUM_THREADS=1` in the shell *before* launching R, so each worker
+runs serially and the parallelism comes entirely from `workers`:
+
+```bash
+$ OMP_NUM_THREADS=1 R    # then run wincrqa(..., workers = 4) inside R
+```
+
+Setting it via `Sys.setenv()` from inside R is too late on most
+systems — the OpenMP thread count is cached the first time `crqa()`
+is called.
+
+To run crqa strictly single-threaded for reproducibility, use the same
+mechanism: launch R with `OMP_NUM_THREADS=1`.
+
+---
+
+## References
+
+Adámek, K., Novotný, J., Marwan, N., & Pánis, R. (2026). AccRQA library:
+accelerating recurrence quantification analysis. *European Physical Journal
+Special Topics*. https://doi.org/10.1140/epjs/s11734-026-02338-3
+
+Coco, M. I., & Dale, R. (2014). Cross-recurrence quantification analysis of
+categorical and continuous time series: An R package. *Frontiers in
+Psychology*, **5**, 510.
+
+Coco, M. I., et al. (2021). crqa: Recurrence quantification analysis for
+categorical and continuous time series in R. *The R Journal*, **13**, 83–97.
+
+Faure, P., & Korn, H. (2004). A new method to estimate the Kolmogorov
+entropy from recurrence plots. *Physics Letters A*, **332**, 329–339.
+
+Marwan, N., Romano, M. C., Thiel, M., & Kurths, J. (2007). Recurrence plots
+for the analysis of complex systems. *Physics Reports*, **438**, 237–329.
+
+Marwan, N., & Kraemer, K. H. (2023). Trends in recurrence analysis of
+dynamical systems. *European Physical Journal Special Topics*, **232**, 5–27.
+
+Schultz, D., Spiegel, S., Marwan, N., & Albayrak, S. (2015). Approximation
+of diagonal line based measures in recurrence quantification analysis.
+*Physics Letters A*, **379**, 997–1011.
+
+Wallot, S. (2018). Multidimensional cross-recurrence quantification analysis
+(MdCRQA). *Multivariate Behavioral Research*, 1–19.

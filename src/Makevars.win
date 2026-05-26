@@ -1,0 +1,4 @@
+## Windows-specific build flags. Rtools' g++ supports OpenMP via -fopenmp;
+## $(SHLIB_OPENMP_CXXFLAGS) resolves to that on a properly configured Rtools.
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS     = $(SHLIB_OPENMP_CXXFLAGS)

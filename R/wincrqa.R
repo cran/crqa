@@ -49,68 +49,71 @@
 ##                                (default: "continuous")
 ##      trend                   : boolean ; whether or not to calculate the change in density of recurrence from the center line outward
 ##                                (default: FALSE)
+##      workers                 : integer ; number of parallel workers (default: 1 = serial).
+##                                Set > 1 to enable parallel execution via future/furrr.
+##                                RAM warning: each worker runs a full crqa() call. Keep workers
+##                                low if time series are long (Stage 2 will fix the RAM bottleneck).
 ## Value:
 ##     A dataframe of recurrence quantification metrics for each window
 ##
-## Author(s): Moreno I. Coco 
+## Author(s): Moreno I. Coco
 ## Contributed by: Alexandra Paxton
 ## Acknowledgements: based on the original MATLAB code by Rick Dale
 
 .packageName <- 'crqa'
 
-wincrqa <- function(ts1, 
-                    ts2, 
-                    windowstep, 
-                    windowsize, 
-                    delay, 
+wincrqa <- function(ts1,
+                    ts2,
+                    windowstep,
+                    windowsize,
+                    delay,
                     embed,
-                    radius = 0.001, 
+                    radius = 0.001,
                     rescale = 0,
-                    normalize = 0, 
-                    mindiagline = 2, 
+                    normalize = 0,
+                    mindiagline = 2,
                     minvertline = 2,
-                    tw = 0, 
-                    whiteline = FALSE, 
-                    recpt = FALSE, 
-                    side = 'both', 
+                    tw = 0,
+                    whiteline = FALSE,
+                    recpt = FALSE,
+                    side = 'both',
                     method = 'crqa',
-                    metric = 'euclidean', 
-                    datatype = 'continuous', 
-                    trend = FALSE){
-  
+                    metric = 'euclidean',
+                    datatype = 'continuous',
+                    trend = FALSE,
+                    workers = 1L,
+                    rr_denom = "full"){
+  rr_denom <- match.arg(rr_denom, c("full", "valid"))
+
   ## stop immediately if the windowsize is smaller than delay*phase AND we're not supplying an RP
-  if ((windowsize < embed*delay) & recpt == FALSE){ 
+  if ((windowsize < embed*delay) & recpt == FALSE){
     stop("Phase-space (embed*delay) longer than windowsize")
-  }  
-  
-  # print(data.frame(windowstep, windowsize, delay, embed, radius, rescale, 
-  #                 normalize, mindiagline, minvertline, tw, whiteline, 
-  #                 recpt, side, method, metric, datatype, trend))
-  
+  }
+
   # initialize a flag that will be used to check whether the last window is included
   irregular = FALSE
-  
+
   ## check the different contexts in which the analyses are running
   if (recpt == FALSE){
-    
+
     # for RQA: check that the user as provided the same data to allow windowed recurrence
     if (method == "rqa"){
       if (exists("ts2")) {
-        ts2 = ts2 
+        ts2 = ts2
       } else {
         stop("Please provide the same vector as argument of t2")
       }
       maxd = length(ts1) ## the total number of points
     }
-    
+
     # for CRQA
     if (method == "crqa"){
       ts1 = as.vector(as.matrix(ts1))
       ts2 = as.vector(as.matrix(ts2))
       maxd = length(ts1) ## the total number of points
-      
+
     }
-    
+
     # for MdCRQA
     if (method == "mdcrqa"){
       ts1 = as.matrix(ts1)
@@ -121,134 +124,145 @@ wincrqa <- function(ts1,
     # for calculating from a supplied RP matrix
     logical_RP = as.logical(ts1)
     v1l = nrow(ts1)
-   # print(logical_RP)
-    ts1 = matrix(logical_RP, 
+    ts1 = matrix(logical_RP,
                  ncol = as.numeric(v1l))
-    # print(dim(ts1))
     v1l = nrow(ts1)
     v2l = ncol(ts1)
     ind = which(ts1 > 0, arr.ind = TRUE)
     r = ind[,1]
     c = ind[,2]
-    
+
     # total possible number of points on the RP
     maxd = v1l
   }
-  
-  
+
+
+  ## Apply normalize globally over the full series so every window shares
+  ## the same scale. After this block normalize is set to 0 so the per-window
+  ## crqa() calls skip the step. (rescale is intentionally left per-window:
+  ## it depends on each window's distance matrix, so a global value cannot
+  ## be pre-computed without materialising the full N×N matrix.)
+  if (normalize > 0 && !recpt) {
+    switch(normalize,
+      { ## 1: unit interval — mirrors crqa() logic exactly
+        ts1 <- ts1 - min(ts1); ts1 <- ts1 / max(ts1)
+        ts2 <- ts2 - min(ts2); ts2 <- ts2 / max(ts2) },
+      { ## 2: z-score
+        ts1 <- scale(ts1)
+        ts2 <- scale(ts2) }
+    )
+    normalize <- 0L
+  }
+
   ## need to make sure to include also "irregular" final segments
   points = seq(1, (maxd - (windowsize)-1), windowstep)
-  
+
   fpoint = points[length(points)] ## beginning of last window
-  
+
   ## as the dimension of the data may often be not that precise
   if (fpoint != (fpoint + windowsize)){
     irregular = TRUE ## flag used later on
     fpoint = fpoint + windowsize # update last point
     points = c(points,  fpoint) ## add final point
   }
-  
-  
-  crqwin = vector() ## initialize the matrix to be filled with crq results
-  tsp = 0 ## set a counter with all windows at which rec was computed    
-  
-  i = 1
-  for (i in points){
-    tsp = tsp +1
-    
-    if (irregular == TRUE & i == fpoint){ ## this is the last window to consider 
-      ixs = i:maxd 
-      # warning(paste("Your latest window was shorter: ", length(ixs)))
+
+  ## set up parallel workers if requested, restore plan on exit.
+  ## suppressPackageStartupMessages avoids the noisy "package 'future'
+  ## was built under R version x.y.z" warning that some R installs emit
+  ## the first time future is loaded.
+  if (workers > 1) {
+    suppressPackageStartupMessages({
+      old_plan <- plan(multisession, workers = workers)
+    })
+    on.exit(plan(old_plan), add = TRUE)
+  }
+
+  ## capture internal helpers so the closure is self-contained on workers
+  .diags_extract <- diags_extract
+
+  ## per-window computation — runs identically serial or parallel
+  .compute_window <- function(idx) {
+    i <- points[idx]
+
+    if (irregular == TRUE & i == fpoint) {
+      ixs = i:maxd
     } else {
       ixs = i:(i + windowsize - 1)
     }
-    
+
     if (recpt == FALSE){
       if (method == "crqa" | method == "rqa"){
-        ## the data consists of two vectors  
-        ts1win = ts1[ixs];
-        ts2win = ts2[ixs];
+        ts1win = ts1[ixs]
+        ts2win = ts2[ixs]
       }
-      
       if (method == "mdcrqa"){
-        ## the data consists of two matrices 
-        ts1win = ts1[ixs, ];
-        ts2win = ts2[ixs, ];
+        ts1win = ts1[ixs, ]
+        ts2win = ts2[ixs, ]
       }
     } else {
-      # the data come from an already-constructed RP
-      # print("RP inputted")
       ts1win = as.matrix(ts1[ixs, ixs])
       ts2win = NA
     }
-    
-    ## check whether the windowsize can accommodate the delay*embed OR the data come from a plot
+
     if ((length(ts1win) > delay*embed) || recpt == TRUE){
-      
-      # print(ts1win)
-      
-      ans = crqa(ts1win, ts2win, delay, embed, rescale, radius, 
+
+      ans = crqa(ts1win, ts2win, delay, embed, rescale, radius,
                  normalize, mindiagline, minvertline,
                  tw, whiteline, recpt, side, method, metric,
-                 datatype)
-      
+                 datatype, rr_denom = rr_denom)
+
       RP = ans$RP
-      
-      # if we have an empty recurrence plot, do this
       if (length(RP) == 1) { RP = vector() }
-      
-      ## if trend needs to be calculated do it here
+
       ans = as.numeric( unlist(ans[1:11]) )
-      
-      #print(c(i, ans))
-  
+
       if (trend == TRUE){
-        
+
         if (length(RP) > 0){
-          RP = as.matrix(RP) ## diags() has changed behaviour 
+          RP = as.matrix(RP)
           NX = ncol(RP)
           T = vector("numeric", length = NX-1)
-          
-          ## below some test matrices
-          # RP = matrix(1:16,nrow=4)
-          # RP = cbind(c(2,7), c(1,9), c(10, 12))
-          
-          # do we need to span the full matrix or just half?
-          ## create a vector of indeces for all diagonals of the matrix  
-          # ixi_diag = -(ncol(RP)-1):(nrow(RP)-1) 
-          
-          # k = 2
-          for (k in 1:(NX-1)){  ##ixi_diag
-            # print(diags_extract(RP, k)) ## check the diagonal
-            ixi_rec = which(diags_extract(RP, k) != F) ## find recurrence
+
+          for (k in 1:(NX-1)){
+            ixi_rec = which(.diags_extract(RP, k) != F)
             T[k] = length(ixi_rec)/ (NX-k)*100;
           }
-          
+
           Ntau = NX - 1 - round(0.1*NX);
-          
-          ## last 10% of the RP will be skipped
-          p = polyfit(2:(Ntau+1),T[1:Ntau], 1) # slope
+          p = pracma::polyfit(2:(Ntau+1), T[1:Ntau], 1)
           TREND = 1000 * p[1]
-          ## Webber's definition includes factor 1000
-          
-        } else { TREND = NA}
+        } else { TREND = NA }
       } else {
         TREND = NA
       }
-      
-      crqwin = rbind(crqwin, c(ans, tsp, TREND), deparse.level = 0)
-      
+
+      return( c(ans, idx, TREND) )
+
     } else {
-      warning( paste("Window", tsp, "was removed because windowsize < delay*embed", sep = " ") )
-      
+      warning( paste("Window", idx, "was removed because windowsize < delay*embed", sep = " ") )
+      return(NULL)
     }
   }
-  
+
+  ## execute serially or in parallel
+  if (workers > 1) {
+    results_list <- future_map(
+      seq_along(points), .compute_window,
+      .options = furrr_options(seed = TRUE)
+    )
+  } else {
+    results_list <- lapply(seq_along(points), .compute_window)
+  }
+
+  ## drop skipped windows and assemble
+  results_list <- Filter(Negate(is.null), results_list)
+  crqwin <- do.call(rbind, results_list)
+
   ## name the measures
-  colnames(crqwin) = c("RR", "DET", "NRLINE", "maxL", "L", 
-                       "ENTR", "rENTR", "LAM", "TT", "catH", 
+  colnames(crqwin) = c("RR", "DET", "NRLINE", "maxL", "L",
+                       "ENTR", "rENTR", "LAM", "TT", "catH",
                        "max_vertlength", "win", "TREND")
-  
+
   return(as.data.frame(crqwin))
-  
+
 }
